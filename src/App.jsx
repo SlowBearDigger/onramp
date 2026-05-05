@@ -103,12 +103,18 @@ function SkipToContent() {
   )
 }
 
+// router basename = vite's BASE_URL minus the trailing slash. vite injects
+// `import.meta.env.BASE_URL` based on the `base` config (which itself reads
+// the BASE_PATH env var at build time). this lets the same code deploy under
+// /ramp/, /onramp/, /, or any other prefix without recompiling react-router.
+const ROUTER_BASENAME = (import.meta.env.BASE_URL || '/').replace(/\/$/, '') || '/'
+
 export default function App() {
   return (
     // top-level error boundary catches any uncaught render error and shows
     // a recoverable fallback instead of leaving the user with a blank page.
     <ErrorBoundary>
-      <BrowserRouter basename="/ramp">
+      <BrowserRouter basename={ROUTER_BASENAME}>
         <ThemeProvider>
           <div className="bg-surface text-on-surface antialiased min-h-screen transition-colors duration-300">
             <SkipToContent />
