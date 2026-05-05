@@ -45,7 +45,7 @@ export default function QuickPurchaseWidget({ onCryptoChange }) {
           <div>
             <div className="flex justify-between items-center mb-2">
               <label className="text-xs font-bold uppercase tracking-widest text-secondary">{t('quickPurchase.youPay')}</label>
-              <span className="text-[10px] uppercase tracking-wider font-bold text-secondary/70">{t('quickPurchase.exampleHint')}</span>
+              <span className="text-[10px] uppercase tracking-wider font-bold text-secondary">{t('quickPurchase.exampleHint')}</span>
             </div>
             <motion.div className="bg-surface-container-low dark:bg-surface-container-high/40 p-3 sm:p-4 rounded-lg flex items-center justify-between border border-transparent hover:border-primary/20 transition-colors">
               <div className="flex items-center gap-2 sm:gap-3">

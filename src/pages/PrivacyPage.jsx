@@ -22,7 +22,7 @@ export default function PrivacyPage() {
 
   return (
     <>
-      <article className="max-w-3xl mx-auto px-4 sm:px-6 pt-28 pb-12" lang="en">
+      <main className="max-w-3xl mx-auto px-4 sm:px-6 pt-28 pb-12" lang="en">
         <FadeIn>
           <header className="mb-10">
             <h1 className="text-3xl sm:text-5xl font-bold tracking-tight">Privacy Policy</h1>
@@ -226,7 +226,7 @@ export default function PrivacyPage() {
 
           </div>
         </FadeIn>
-      </article>
+      </main>
       <Footer />
     </>
   )

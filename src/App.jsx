@@ -118,6 +118,10 @@ export default function App() {
         <ThemeProvider>
           <div className="bg-surface text-on-surface antialiased min-h-screen transition-colors duration-300">
             <SkipToContent />
+            {/* skip-to-content target. each page route owns its own <main>
+                landmark (LandingPage, SwapPage, AdminLayout, etc.) so we
+                don't double up — having two <main>s per page is invalid
+                html and breaks screen-reader navigation. */}
             <div id="main-content">
               <AnimatedRoutes />
             </div>

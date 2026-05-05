@@ -9,7 +9,7 @@ import { FadeIn, MagneticButton } from '../components/Motion'
 export default function NotFoundPage() {
   const { t } = useTranslation()
   return (
-    <section className="min-h-[70vh] flex items-center justify-center px-4 sm:px-6 pt-28 pb-12">
+    <main className="min-h-[70vh] flex items-center justify-center px-4 sm:px-6 pt-28 pb-12">
       <FadeIn className="text-center max-w-md">
         <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/10 text-primary mb-6" aria-hidden="true">
           <Compass size={28} weight="bold" />
@@ -27,6 +27,6 @@ export default function NotFoundPage() {
           </MagneticButton>
         </Link>
       </FadeIn>
-    </section>
+    </main>
   )
 }

@@ -54,7 +54,7 @@ export default function LanguageSwitcher({ compact = false }) {
         onClick={() => setOpen((v) => !v)}
         aria-haspopup="listbox"
         aria-expanded={open}
-        aria-label={t('language.label')}
+        aria-label={`${t('language.label')} (${current.code.toUpperCase()})`}
         className={`flex items-center gap-1.5 rounded-lg hover:bg-surface-container-high dark:hover:bg-white/10 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
           compact ? 'w-9 h-9 justify-center' : 'px-2.5 py-1.5'
         }`}

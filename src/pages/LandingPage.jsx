@@ -1,10 +1,15 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, lazy, Suspense } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import QuickPurchaseWidget from '../components/QuickPurchaseWidget'
-import ReactiveBlobs from '../components/ReactiveBlobs'
 import Footer from '../components/Footer'
 import { CRYPTOS } from '../config/cryptos'
+
+// ReactiveBlobs is a heavy decorative canvas/motion component (~18KB
+// gzipped + uses motion/react which is ~40KB). lazy-load it so the
+// hero h1 + primary CTA paint without waiting for the blob bundle.
+// Suspense fallback is null — blobs are decorative, no skeleton needed.
+const ReactiveBlobs = lazy(() => import('../components/ReactiveBlobs'))
 import { NoSignupDemo, InstantDemo, BestRatesDemo } from '../components/FeatureDemos'
 import { usePwaDisplayMode } from '../hooks/usePwaDisplayMode'
 
@@ -91,7 +96,9 @@ function Hero({ onCryptoChange, cryptoColor }) {
         <QuickPurchaseWidget onCryptoChange={onCryptoChange} />
       </div>
 
-      <ReactiveBlobs color={cryptoColor} />
+      <Suspense fallback={null}>
+        <ReactiveBlobs color={cryptoColor} />
+      </Suspense>
     </section>
   )
 }
@@ -149,8 +156,10 @@ export default function LandingPage() {
 
   return (
     <>
-      <Hero onCryptoChange={setActiveCrypto} cryptoColor={activeCrypto.color} />
-      <Features />
+      <main>
+        <Hero onCryptoChange={setActiveCrypto} cryptoColor={activeCrypto.color} />
+        <Features />
+      </main>
       <Footer />
     </>
   )

@@ -58,7 +58,7 @@ export default function ProviderComparison({
         </Stagger>
       </div>
 
-      <p className="text-[11px] text-secondary/70 text-center px-2 leading-relaxed">
+      <p className="text-[11px] text-secondary text-center px-2 leading-relaxed">
         {t('compare.footnote')}
       </p>
     </section>
