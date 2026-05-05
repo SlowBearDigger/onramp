@@ -98,7 +98,10 @@ function Hero({ onCryptoChange, cryptoColor }) {
         <QuickPurchaseWidget onCryptoChange={onCryptoChange} />
       </div>
 
-      <ReactiveBlobs color={cryptoColor} />
+      {/* hidden on mobile — the blob fade-in lands inside the CLS
+          measurement window on slow connections, causing flaky CLS
+          scores. desktop has the headroom to render them cleanly. */}
+      <ReactiveBlobs color={cryptoColor} className="hidden md:block" />
     </section>
   )
 }
