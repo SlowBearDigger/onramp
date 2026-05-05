@@ -8,8 +8,20 @@ import { VitePWA } from 'vite-plugin-pwa'
 // `/<repo-name>/` automatically (see .github/workflows/deploy-frontend.yml).
 const BASE_PATH = process.env.BASE_PATH || '/ramp/'
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   base: BASE_PATH,
+  // strip console.* in production via compile-time substitution. each
+  // call site `console.log("...")` becomes `(()=>{})("...")` after
+  // parse — args still evaluate (template strings, etc.) but the call
+  // is a no-op. cleanest path that works with vite 8 / rolldown.
+  // dev keeps them so devtools debugging still works.
+  define: mode === 'production' ? {
+    'console.log': '(()=>{})',
+    'console.warn': '(()=>{})',
+    'console.error': '(()=>{})',
+    'console.info': '(()=>{})',
+    'console.debug': '(()=>{})',
+  } : {},
   plugins: [
     react(),
     tailwindcss(),
@@ -21,6 +33,11 @@ export default defineConfig({
       srcDir: 'src',
       filename: 'sw.js',
       registerType: 'autoUpdate',
+      // 'script-defer' adds the SW registration as <script src="registerSW.js"
+      // defer> instead of the default render-blocking <script>. saves ~70ms
+      // off first paint per Lighthouse. 'inline' would be even faster but
+      // breaks our CSP `script-src 'self'` (no 'unsafe-inline' for scripts).
+      injectRegister: 'script-defer',
       includeAssets: ['pwa-192.png', 'pwa-512.png'],
       manifest: {
         name: 'On-Ramp — Premium Crypto Gateway',
@@ -44,4 +61,4 @@ export default defineConfig({
       },
     }),
   ],
-})
+}))

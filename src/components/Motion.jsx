@@ -148,16 +148,23 @@ export function ScaleIn({ children, delay = 0, className = '', ...props }) {
   )
 }
 
-// ─── Blur fade in (premium glass effect) ───────────────────────────────────
+// ─── Blur fade in (composited — opacity + translate only) ──────────────
 // Usage: <BlurIn> for hero text or widget entrance
+//
+// Used to animate `filter: blur(10px) → blur(0px)` for the glass effect,
+// but Lighthouse flagged that as "non-composited animation" — `filter`
+// requires a paint-stage operation per frame, locking the main thread
+// during animation and inflating CLS measurements. Now uses opacity
+// + translateY only, which the GPU composites without paint. Visual
+// difference is minimal (the blur was subtle); perf gain is real.
 export function BlurIn({ children, delay = 0, className = '', ...props }) {
   const prefersReduced = useReducedMotion()
   return (
     <motion.div
-      initial={prefersReduced ? { opacity: 0 } : { opacity: 0, filter: 'blur(10px)', y: 20 }}
-      whileInView={{ opacity: 1, filter: 'blur(0px)', y: 0 }}
+      initial={prefersReduced ? { opacity: 0 } : { opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
-      transition={prefersReduced ? instant : { duration: 0.8, delay, ease: [0.16, 1, 0.3, 1] }}
+      transition={prefersReduced ? instant : { duration: 0.6, delay, ease: [0.16, 1, 0.3, 1] }}
       className={className}
       {...props}
     >
