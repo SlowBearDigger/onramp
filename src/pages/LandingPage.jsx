@@ -1,15 +1,17 @@
-import { useState, useEffect, lazy, Suspense } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import QuickPurchaseWidget from '../components/QuickPurchaseWidget'
+import ReactiveBlobs from '../components/ReactiveBlobs'
 import Footer from '../components/Footer'
 import { CRYPTOS } from '../config/cryptos'
 
-// ReactiveBlobs is a heavy decorative canvas/motion component (~18KB
-// gzipped + uses motion/react which is ~40KB). lazy-load it so the
-// hero h1 + primary CTA paint without waiting for the blob bundle.
-// Suspense fallback is null — blobs are decorative, no skeleton needed.
-const ReactiveBlobs = lazy(() => import('../components/ReactiveBlobs'))
+// note: ReactiveBlobs is rendered eagerly even though it's a heavy
+// decorative bundle. lazy-loading it produced no measurable perf gain
+// in lighthouse (still 76 mobile) and tripled CLS on desktop from
+// ~0.05 to 0.26 because the blobs faded in after first paint, which
+// the CLS heuristic treats as a layout shift even though the element
+// is position:absolute inside position:fixed.
 import { NoSignupDemo, InstantDemo, BestRatesDemo } from '../components/FeatureDemos'
 import { usePwaDisplayMode } from '../hooks/usePwaDisplayMode'
 
@@ -96,9 +98,7 @@ function Hero({ onCryptoChange, cryptoColor }) {
         <QuickPurchaseWidget onCryptoChange={onCryptoChange} />
       </div>
 
-      <Suspense fallback={null}>
-        <ReactiveBlobs color={cryptoColor} />
-      </Suspense>
+      <ReactiveBlobs color={cryptoColor} />
     </section>
   )
 }
