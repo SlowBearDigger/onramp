@@ -202,22 +202,20 @@ export default function ReactiveBlobs({ color = '#047857', className = '', warpP
           filter: 'blur(80px)',
           borderRadius: '50% 45% 55% 50% / 50% 55% 45% 50%',
         }}
-        // initial = first frame so motion doesn't render a transform-less
-        // element on mount, then snap to the keyframe value next frame.
-        //
-        // CLS note: idle scale was animated through `[1, 1.05, ...]` —
-        // motion translates this to `transform: scale(N)`. transforms
-        // don't normally cause CLS, but Lighthouse 12+ "Layout Shifts"
-        // does measure visual changes from scale animations as shifts.
-        // since the scale variation is barely perceptible (1.0 to 1.05)
-        // and x/y drift carries the visual interest anyway, we drop
-        // scale animation in the idle path to keep CLS clean.
+        // CLS note: previous versions animated x/y drift through keyframe
+        // arrays even on idle (the constant background motion). Lighthouse
+        // 12+ "Layout Shifts" measures keyframe-driven transforms as
+        // shifts even though they're position:absolute inside a fixed
+        // parent. dropping idle x/y/scale animation entirely → CLS 0
+        // and the blobs still look great as static color washes.
+        // animations come back during user-triggered transitions
+        // (warp/landing/success), which fall outside the CLS window.
         initial={{ x: 0, y: 0, scale: 1, opacity: 0.15 }}
         animate={
           loopActive
             ? {
-                x: isWarping ? -160 : isLanding ? 0 : [0, 40, -20, 30, 0],
-                y: isWarping ? -160 : isLanding ? 0 : [0, -30, 20, -10, 0],
+                x: isWarping ? -160 : 0,
+                y: isWarping ? -160 : 0,
                 scale: isWarping
                   ? 0.4
                   : isLanding
@@ -273,8 +271,8 @@ export default function ReactiveBlobs({ color = '#047857', className = '', warpP
         animate={
           loopActive
             ? {
-                x: isWarping ? 140 : [0, -30, 20, -15, 0],
-                y: isWarping ? 140 : [0, 20, -30, 12, 0],
+                x: isWarping ? 140 : 0,
+                y: isWarping ? 140 : 0,
                 scale: isWarping ? 0.4 : isLanding ? 1.2 : 1,
                 opacity: isWarping ? 0.03 : isLanding ? 0.12 : 0.09,
               }
@@ -318,8 +316,8 @@ export default function ReactiveBlobs({ color = '#047857', className = '', warpP
         animate={
           loopActive
             ? {
-                x: isWarping ? 40 : [0, 25, -20, 15, 0],
-                y: isWarping ? 180 : [0, -15, 12, -25, 0],
+                x: isWarping ? 40 : 0,
+                y: isWarping ? 180 : 0,
                 scale: isWarping ? 0.35 : isLanding ? 1.25 : 1,
                 opacity: isWarping ? 0.02 : isLanding ? 0.14 : 0.12,
               }
