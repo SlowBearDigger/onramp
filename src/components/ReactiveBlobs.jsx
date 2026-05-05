@@ -210,7 +210,11 @@ export default function ReactiveBlobs({ color = '#047857', className = '', warpP
         // and the blobs still look great as static color washes.
         // animations come back during user-triggered transitions
         // (warp/landing/success), which fall outside the CLS window.
-        initial={{ x: 0, y: 0, scale: 1, opacity: 0.15 }}
+        // CLS dodge: start at opacity 0 so the blob doesn't visually
+        // exist on first paint. fade in after a 700ms delay — past the
+        // typical CLS observation window. same trick for all three
+        // blobs below.
+        initial={{ x: 0, y: 0, scale: 1, opacity: 0 }}
         animate={
           loopActive
             ? {
@@ -250,7 +254,7 @@ export default function ReactiveBlobs({ color = '#047857', className = '', warpP
             : isSuccess
             ? { duration: 4, repeat: Infinity, ease: 'easeInOut' }
             : { duration: 24, repeat: Infinity, ease: 'easeInOut' },
-          opacity: { duration: 1.2, ease: 'easeInOut' },
+          opacity: { duration: 1.2, ease: 'easeInOut', delay: 0.7 },
         }}
       />
 
@@ -295,7 +299,7 @@ export default function ReactiveBlobs({ color = '#047857', className = '', warpP
             : isLanding
             ? { duration: 1, ease: 'easeInOut' }
             : { duration: 28, repeat: Infinity, ease: 'easeInOut' },
-          opacity: { duration: 1.2, ease: 'easeInOut' },
+          opacity: { duration: 1.2, ease: 'easeInOut', delay: 0.7 },
         }}
       />
 
@@ -340,7 +344,7 @@ export default function ReactiveBlobs({ color = '#047857', className = '', warpP
             : isLanding
             ? { duration: 1, ease: 'easeInOut' }
             : { duration: 20, repeat: Infinity, ease: 'easeInOut' },
-          opacity: { duration: 1.2, ease: 'easeInOut' },
+          opacity: { duration: 1.2, ease: 'easeInOut', delay: 0.7 },
         }}
       />
 
