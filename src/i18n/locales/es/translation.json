@@ -1,4 +1,11 @@
 {
+  "settings": {
+    "label": "Ajustes",
+    "theme": "Tema",
+    "light": "Claro",
+    "dark": "Oscuro",
+    "language": "Idioma"
+  },
   "privacyDisclosure": {
     "aria": "Aviso de privacidad",
     "title": "Tu privacidad",

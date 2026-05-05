@@ -7,6 +7,13 @@
     "cta": "Got it",
     "dismiss": "Dismiss"
   },
+  "settings": {
+    "label": "Settings",
+    "theme": "Theme",
+    "light": "Light",
+    "dark": "Dark",
+    "language": "Language"
+  },
   "common": {
     "loading": "Loading…",
     "back": "Back",

@@ -2,26 +2,28 @@ import { useState, useEffect, useRef } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from 'motion/react'
-import { CreditCard, ArrowsLeftRight, ClockCounterClockwise, Sun, Moon, Globe } from '@phosphor-icons/react'
+import { CreditCard, ArrowsLeftRight, ClockCounterClockwise, Sun, Moon, Gear } from '@phosphor-icons/react'
 import { useTheme } from '../context/ThemeContext'
 import { SUPPORTED_LANGUAGES } from '../i18n'
 
-// mobile bottom nav. three primary tabs (Buy/Sell/History) get icon+label
-// like before; theme + language are compact icon-only utilities on the
-// right so the bar stays balanced. all labels are i18n'd.
+// mobile bottom nav.
+//
+// layout: four equal-width columns. three primary tabs (Buy/Sell/History)
+// + one Settings button. settings opens a popover with theme + language
+// inside, keeping the bar focused on navigation. four flex columns means
+// the bar is symmetrical regardless of how many utilities settings holds.
 //
 // perf notes for ios:
-//   - dropped backdrop-blur-md → backdrop-blur (4px) — md is 12px which
-//     hits a known safari rasterizer bottleneck on iphone 11/12 minis.
-//   - removed the layoutId animation in favor of a static positioned
-//     indicator. layout animations recalculate paint geometry every
-//     frame which compounds with the blur cost.
+//   - backdrop-blur-sm (4px) instead of md (12px). md hits a known
+//     safari rasterizer bottleneck on iphone 11/12 minis.
+//   - static positioned active indicator (no layoutId) — layout
+//     animations re-measure paint geometry every frame.
 export default function BottomNav() {
   const location = useLocation()
   const { t, i18n } = useTranslation()
   const { dark, toggle } = useTheme()
-  const [langOpen, setLangOpen] = useState(false)
-  const langWrapRef = useRef(null)
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  const settingsWrapRef = useRef(null)
 
   const tabs = [
     { Icon: CreditCard, label: t('swap.tabs.buy'), to: '/swap' },
@@ -33,18 +35,18 @@ export default function BottomNav() {
   const currentLang = SUPPORTED_LANGUAGES.find((l) => l.code === i18n.language?.slice(0, 2)) || SUPPORTED_LANGUAGES[0]
 
   useEffect(() => {
-    if (!langOpen) return
+    if (!settingsOpen) return
     const onClick = (e) => {
-      if (langWrapRef.current && !langWrapRef.current.contains(e.target)) setLangOpen(false)
+      if (settingsWrapRef.current && !settingsWrapRef.current.contains(e.target)) setSettingsOpen(false)
     }
-    const onKey = (e) => { if (e.key === 'Escape') setLangOpen(false) }
+    const onKey = (e) => { if (e.key === 'Escape') setSettingsOpen(false) }
     document.addEventListener('mousedown', onClick)
     document.addEventListener('keydown', onKey)
     return () => {
       document.removeEventListener('mousedown', onClick)
       document.removeEventListener('keydown', onKey)
     }
-  }, [langOpen])
+  }, [settingsOpen])
 
   return (
     <nav
@@ -52,11 +54,6 @@ export default function BottomNav() {
       className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-surface-container-lowest/95 dark:bg-surface-container-lowest/95 backdrop-blur border-t border-outline-variant/10 dark:border-white/5"
       style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
     >
-      {/* layout: 3 primary tabs (icon + label) on the left, then a thin
-          divider, then 2 utility buttons (icon-only) on the right. tabs
-          flex-1 to fill available width; utilities are fixed-width so the
-          bar stays balanced even when a label like "History" wraps in
-          another locale. */}
       <div className="flex items-stretch px-2 py-1.5">
         {tabs.map((tab) => {
           const active = isActive(tab.to)
@@ -82,74 +79,99 @@ export default function BottomNav() {
           )
         })}
 
-        {/* divider — visually separates primary nav from utility actions.
-            very subtle; just a 1px line with opacity. */}
-        <div aria-hidden="true" className="self-center mx-1 h-7 w-px bg-outline-variant/20 dark:bg-white/10" />
-
-        {/* utilities — icon-only. compact (40px each) so the 3 tabs keep
-            most of the bar real estate. tap target is still 44px+ thanks
-            to the py-3 padding. */}
-        <div ref={langWrapRef} className="relative shrink-0">
+        {/* settings — fourth equal-width column. opens a popover with
+            theme + language. stays as a tab visually (icon + label) so
+            the bar reads as a uniform 4-column grid. */}
+        <div ref={settingsWrapRef} className="flex-1 min-w-0 relative">
           <button
-            onClick={() => setLangOpen((v) => !v)}
-            aria-haspopup="listbox"
-            aria-expanded={langOpen}
-            aria-label={`${t('language.label')} (${currentLang.code.toUpperCase()})`}
-            className="relative flex items-center justify-center w-10 h-12 rounded-xl"
+            type="button"
+            onClick={() => setSettingsOpen((v) => !v)}
+            aria-haspopup="dialog"
+            aria-expanded={settingsOpen}
+            aria-label={t('settings.label')}
+            className="w-full"
           >
-            <Globe size={22} weight="bold" className="text-secondary" />
-            {/* iso code as a tiny chip on the icon corner — much more
-                compact than a stacked label, and identifies the active
-                language at a glance. */}
-            <span
-              aria-hidden="true"
-              className="absolute -bottom-0.5 -right-0.5 text-[9px] font-bold uppercase tracking-wider font-mono text-primary bg-surface-container-lowest dark:bg-surface-container px-1 rounded leading-tight"
-            >
-              {currentLang.code}
-            </span>
+            <div className="flex flex-col items-center gap-0.5 py-1.5 rounded-xl">
+              <span className={`inline-flex ${settingsOpen ? 'text-primary' : 'text-secondary'}`}>
+                <Gear size={22} weight="bold" />
+              </span>
+              <span className={`text-[11px] font-semibold truncate max-w-full px-1 ${settingsOpen ? 'text-primary' : 'text-secondary'}`}>
+                {t('settings.label')}
+              </span>
+            </div>
           </button>
+
           <AnimatePresence>
-            {langOpen && (
-              <motion.ul
-                initial={{ opacity: 0, y: 6, scale: 0.97 }}
+            {settingsOpen && (
+              <motion.div
+                role="dialog"
+                aria-label={t('settings.label')}
+                initial={{ opacity: 0, y: 8, scale: 0.98 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 6, scale: 0.97 }}
-                transition={{ duration: 0.15 }}
-                role="listbox"
-                aria-label={t('language.label')}
-                className="absolute right-0 bottom-full mb-2 bg-surface-container-lowest dark:bg-surface-container rounded-xl shadow-lg shadow-black/20 dark:shadow-black/50 border border-outline-variant/20 dark:border-white/10 py-1.5 z-50 min-w-[150px] list-none m-0"
+                exit={{ opacity: 0, y: 8, scale: 0.98 }}
+                transition={{ duration: 0.16 }}
+                className="absolute right-0 bottom-full mb-2 bg-surface-container-lowest dark:bg-surface-container rounded-2xl shadow-xl shadow-black/20 dark:shadow-black/50 border border-outline-variant/20 dark:border-white/10 z-50 w-[min(calc(100vw-1.5rem),18rem)] overflow-hidden"
               >
-                {SUPPORTED_LANGUAGES.map((l) => {
-                  const active = l.code === currentLang.code
-                  return (
-                    <li key={l.code}>
-                      <button
-                        type="button"
-                        role="option"
-                        aria-selected={active}
-                        onClick={() => { i18n.changeLanguage(l.code); setLangOpen(false) }}
-                        className={`w-full text-left px-3 py-2 flex items-center gap-3 hover:bg-surface-container-low dark:hover:bg-surface-container-high/50 transition-colors ${active ? 'bg-primary/5' : ''}`}
-                      >
-                        <span className={`text-[10px] font-bold uppercase tracking-wider font-mono w-6 ${active ? 'text-primary' : 'text-secondary'}`}>{l.code}</span>
-                        <span className={`text-sm font-medium ${active ? 'text-primary' : 'text-on-surface'}`}>{l.label}</span>
-                      </button>
-                    </li>
-                  )
-                })}
-              </motion.ul>
+                {/* theme row — segmented toggle */}
+                <div className="px-4 py-3.5">
+                  <div className="flex items-baseline justify-between mb-2">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-secondary">{t('settings.theme')}</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-1.5 bg-surface-container-low dark:bg-surface-container-high/40 rounded-xl p-1">
+                    <button
+                      type="button"
+                      onClick={() => { if (dark) toggle() }}
+                      aria-pressed={!dark}
+                      className={`flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-bold transition-colors ${!dark ? 'bg-surface-container-lowest text-primary shadow-sm' : 'text-secondary hover:text-on-surface'}`}
+                    >
+                      <Sun size={14} weight="bold" aria-hidden="true" />
+                      {t('settings.light')}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { if (!dark) toggle() }}
+                      aria-pressed={dark}
+                      className={`flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-bold transition-colors ${dark ? 'bg-surface-container text-primary shadow-sm' : 'text-secondary hover:text-on-surface'}`}
+                    >
+                      <Moon size={14} weight="bold" aria-hidden="true" />
+                      {t('settings.dark')}
+                    </button>
+                  </div>
+                </div>
+
+                {/* divider */}
+                <div className="h-px bg-outline-variant/15 dark:bg-white/5" aria-hidden="true" />
+
+                {/* language row */}
+                <div className="px-4 py-3.5">
+                  <div className="flex items-baseline justify-between mb-2">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-secondary">{t('settings.language')}</span>
+                  </div>
+                  <ul role="listbox" aria-label={t('language.label')} className="space-y-0.5 list-none m-0 p-0">
+                    {SUPPORTED_LANGUAGES.map((l) => {
+                      const active = l.code === currentLang.code
+                      return (
+                        <li key={l.code}>
+                          <button
+                            type="button"
+                            role="option"
+                            aria-selected={active}
+                            onClick={() => { i18n.changeLanguage(l.code); setSettingsOpen(false) }}
+                            className={`w-full text-left px-3 py-2 rounded-lg flex items-center gap-3 transition-colors ${active ? 'bg-primary/8 text-primary' : 'text-on-surface hover:bg-surface-container-low dark:hover:bg-surface-container-high/30'}`}
+                          >
+                            <span className={`text-[10px] font-bold uppercase tracking-wider font-mono w-6 ${active ? 'text-primary' : 'text-secondary'}`}>{l.code}</span>
+                            <span className="text-sm font-medium">{l.label}</span>
+                            {active && <span aria-hidden="true" className="ml-auto w-1.5 h-1.5 rounded-full bg-primary" />}
+                          </button>
+                        </li>
+                      )
+                    })}
+                  </ul>
+                </div>
+              </motion.div>
             )}
           </AnimatePresence>
         </div>
-
-        <button
-          onClick={toggle}
-          className="flex items-center justify-center w-10 h-12 rounded-xl shrink-0"
-          aria-label={dark ? t('common.switchToLight') : t('common.switchToDark')}
-        >
-          {dark
-            ? <Sun size={22} weight="bold" className="text-secondary" />
-            : <Moon size={22} weight="bold" className="text-secondary" />}
-        </button>
       </div>
     </nav>
   )

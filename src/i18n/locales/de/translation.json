@@ -1,4 +1,11 @@
 {
+  "settings": {
+    "label": "Einstellungen",
+    "theme": "Design",
+    "light": "Hell",
+    "dark": "Dunkel",
+    "language": "Sprache"
+  },
   "privacyDisclosure": {
     "aria": "Datenschutzhinweis",
     "title": "Deine Privatsphäre",
