@@ -40,13 +40,26 @@
     <link rel="preconnect" href="https://cdn.fontshare.com" crossorigin />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <!-- fonts are loaded via JS in src/main.jsx (non-blocking, CSP-clean).
-         the previous `media="print" onload="..."` trick used inline event
-         handlers which violate `script-src 'self'`. JS injection at startup
-         keeps the same non-blocking behavior without inline handlers.
-         - Switzer (display + body) from fontshare CDN — free OFL.
-         - JetBrains Mono (numeric / addresses) from google fonts — free OFL.
-         noscript fallback below covers the no-JS case. -->
+    <!-- non-blocking font load. browser starts downloading the CSS
+         immediately because the link is in the HTML head (parallelized
+         with the JS bundle), but media="print" means it doesn't apply
+         to screen until JS swaps it via the data-font-loader hook.
+         that swap happens inside main.jsx (a bundled, CSP-allowed
+         script) — no inline event handlers, CSP `script-src 'self'`
+         stays strict.
+         noscript fallback covers the no-JS case. -->
+    <link
+      rel="stylesheet"
+      href="https://api.fontshare.com/v2/css?f[]=switzer@400,500,600,700,800&display=swap"
+      media="print"
+      data-font-loader=""
+    />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap"
+      media="print"
+      data-font-loader=""
+    />
     <noscript>
       <link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=switzer@400,500,600,700,800&display=swap" />
       <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" />

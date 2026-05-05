@@ -4,32 +4,19 @@ import './index.css'
 import './i18n'
 import App from './App.jsx'
 
-// non-blocking font load. injecting <link rel="stylesheet"> at runtime
-// (post-DOMContentLoaded) ensures the fonts don't render-block first
-// paint, while the strict CSP `script-src 'self'` stays intact (the
-// classic `media="print" onload="..."` trick uses an inline event
-// handler that CSP correctly blocks). once a stylesheet href is added
-// to <head> dynamically, the browser fetches it asynchronously without
-// blocking. fonts themselves use `display=swap` so text renders in a
-// fallback first and swaps when the webfont arrives.
+// non-blocking font swap. index.html ships the font <link> tags with
+// media="print" so browsers start fetching the CSS immediately (in
+// parallel with the JS bundle) but don't render-block. once this
+// bundle executes we flip media to "all" so the fonts apply.
+//
+// the prior approach (`onload="this.media='all'"`) used an inline
+// event handler that violates strict `script-src 'self'`. doing the
+// swap from a bundled script (this file) is CSP-clean.
 //
 // noscript fallback in index.html handles the (rare) no-JS case.
-function loadFonts() {
-  const stylesheets = [
-    'https://api.fontshare.com/v2/css?f[]=switzer@400,500,600,700,800&display=swap',
-    'https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap',
-  ]
-  for (const href of stylesheets) {
-    const link = document.createElement('link')
-    link.rel = 'stylesheet'
-    link.href = href
-    document.head.appendChild(link)
-  }
-}
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', loadFonts, { once: true })
-} else {
-  loadFonts()
+{
+  const links = document.querySelectorAll('link[data-font-loader]')
+  for (const link of links) link.media = 'all'
 }
 
 createRoot(document.getElementById('root')).render(
