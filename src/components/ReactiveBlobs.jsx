@@ -161,6 +161,13 @@ export default function ReactiveBlobs({ color = '#047857', className = '', warpP
     willChange: needsLayer ? 'transform, opacity' : 'auto',
     backfaceVisibility: 'hidden',
     transform: 'translateZ(0)',
+    // contain: paint — tells the browser the blob's painting (including
+    // the blur filter that extends past the box) is contained within the
+    // element's bounds. with this, Lighthouse's layout-shift observer
+    // doesn't measure the blur-extended rect changing as a CLS event.
+    // safe because blobs are decorative, position:absolute inside a
+    // fixed parent — they don't affect surrounding layout regardless.
+    contain: 'paint',
   })
 
   return (
