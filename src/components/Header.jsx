@@ -74,8 +74,8 @@ export default function Header() {
       transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
       className={`fixed top-0 w-full z-50 antialiased tracking-tight duration-300 ${
         scrolled
-          ? 'bg-surface-container-lowest/90 dark:bg-surface-container-lowest/90 backdrop-blur-md shadow-sm dark:shadow-none dark:border-b dark:border-outline-variant/10'
-          : 'bg-surface-container-lowest/80 dark:bg-surface-container-lowest/80 backdrop-blur-md shadow-sm dark:shadow-none'
+          ? 'bg-surface-container-lowest/95 dark:bg-surface-container-lowest/95 backdrop-blur-sm md:backdrop-blur-md shadow-sm dark:shadow-none dark:border-b dark:border-outline-variant/10'
+          : 'bg-surface-container-lowest/90 dark:bg-surface-container-lowest/90 backdrop-blur-sm md:backdrop-blur-md shadow-sm dark:shadow-none'
       }`}
     >
       <div className="flex justify-between items-center px-4 sm:px-6 py-3.5 max-w-7xl mx-auto gap-3">

@@ -394,7 +394,7 @@ export default function SwapWidget({ onCryptoChange, mode = 'buy', onViewHistory
                     exit={{ opacity: 0, y: -6 }}
                     transition={{ duration: 0.16 }}
                   >
-                <Stagger stagger={0.06} className="space-y-4 sm:space-y-5">
+                <Stagger stagger={0.06} className="space-y-3 sm:space-y-5">
                   {/* Top input: You Pay (buy) / You Send (sell) */}
                   <StaggerItem className="space-y-2 sm:space-y-3">
                     <motion.div className="bg-surface-container/60 dark:bg-black/20 p-4 sm:p-6 rounded-xl border border-outline-variant/5 dark:border-white/5">
