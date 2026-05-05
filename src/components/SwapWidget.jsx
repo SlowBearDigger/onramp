@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from 'motion/react'
@@ -143,10 +143,24 @@ export default function SwapWidget({ onCryptoChange, mode = 'buy', onViewHistory
   // which path runs depends on VITE_USE_MOCK and whether transak (the only
   // currently-real provider) has an api key. handleMessage validates
   // postMessage origins internally so it's safe to mount.
+  //
+  // post-success UX: when the provider widget reports a successful order,
+  // we mark a ref. when the user then closes the widget (via "Back to app"
+  // or the X), we auto-navigate to /swap/history so they land where the
+  // new order will appear. without this, users land back on the empty
+  // swap form and have to manually tap History to see their purchase.
+  const successPendingRef = useRef(false)
   const provider = useProvider({
     onSuccess: () => {
-      // give the backend a moment to receive + persist the webhook, then
-      // HistoryView's useOrders hook will pick it up on next poll.
+      successPendingRef.current = true
+    },
+    onClose: () => {
+      if (successPendingRef.current) {
+        successPendingRef.current = false
+        // delay a tick so the close transition can play. onViewHistory is
+        // wired by SwapPage to navigate('/swap/history').
+        setTimeout(() => onViewHistory?.(), 200)
+      }
     },
   })
 

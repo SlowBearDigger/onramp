@@ -5,11 +5,14 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001'
 // web push opt-in flow.
 //
 // state machine:
-//   'unsupported'   — browser doesn't support PushManager / Notification
-//   'denied'        — user clicked "Block" in the permission prompt
-//   'unsubscribed'  — supported + permission granted (or default), but not yet subscribed
-//   'subscribed'    — active subscription POSTed to backend
-//   'error'         — transient failure (offline, bad VAPID key, etc.)
+//   'checking'         — initial, before SW + permission status is read
+//   'unsupported'      — browser lacks PushManager / Notification
+//   'ios-needs-pwa'    — iOS Safari, push works only when installed to
+//                        Home Screen (since iOS 16.4). user-action gate.
+//   'denied'           — user clicked "Block" in the permission prompt
+//   'unsubscribed'     — supported + not subscribed; ready to opt-in
+//   'subscribed'       — active subscription POSTed to backend
+//   'error'            — transient failure (offline, backend 500, etc.)
 //
 // we DON'T auto-prompt — calling Notification.requestPermission() without
 // a clear user gesture is a UX antipattern that browsers increasingly
@@ -39,6 +42,18 @@ export function usePushNotifications({ customerId } = {}) {
         if (!cancelled) setState('unsupported')
         return
       }
+      // iOS Safari quirks: web push requires the PWA to be installed on
+      // the Home Screen (iOS 16.4+). detect the combo of (a) iOS device
+      // and (b) NOT in standalone display mode → tell the user the
+      // install-to-home-screen step is needed before we even try.
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+        (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) // ipad with desktop UA
+      const isStandalone = window.navigator.standalone === true ||
+        window.matchMedia('(display-mode: standalone)').matches
+      if (isIOS && !isStandalone) {
+        if (!cancelled) setState('ios-needs-pwa')
+        return
+      }
       if (Notification.permission === 'denied') {
         if (!cancelled) setState('denied')
         return
@@ -60,7 +75,7 @@ export function usePushNotifications({ customerId } = {}) {
 
   const subscribe = useCallback(async () => {
     if (!customerId) {
-      setError(new Error('No wallet address — make a purchase first to enable notifications.'))
+      setError({ code: 'no_wallet', message: 'Make a purchase first so notifications can be tied to your wallet.' })
       setState('error')
       return false
     }
@@ -76,9 +91,14 @@ export function usePushNotifications({ customerId } = {}) {
 
       // 2. fetch VAPID public key from backend
       const r = await fetch(`${API_BASE}/api/push/vapid-public-key`)
-      if (!r.ok) throw new Error(`vapid-public-key HTTP ${r.status}`)
+      if (r.status === 503) {
+        const err = new Error('Push notifications are not configured on the server yet.')
+        err.code = 'push_disabled'
+        throw err
+      }
+      if (!r.ok) throw new Error(`Could not reach the notifications server (HTTP ${r.status}).`)
       const { publicKey } = await r.json()
-      if (!publicKey) throw new Error('vapid-public-key empty')
+      if (!publicKey) throw new Error('Notifications server returned an empty key.')
 
       // 3. ensure SW is active, subscribe via push manager
       const reg = await navigator.serviceWorker.ready
@@ -100,13 +120,17 @@ export function usePushNotifications({ customerId } = {}) {
           },
         }),
       })
-      if (!ack.ok) throw new Error(`subscribe HTTP ${ack.status}`)
+      if (!ack.ok) throw new Error(`Could not register the subscription (HTTP ${ack.status}).`)
       setState('subscribed')
       setError(null)
       return true
     } catch (err) {
-      setError(err)
+      // surface a reasonable user-facing message
+      const msg = err?.message || 'Something went wrong enabling notifications.'
+      setError({ code: err?.code || 'unknown', message: msg })
       setState('error')
+      // eslint-disable-next-line no-console
+      console.warn('[push] subscribe failed:', msg)
       return false
     }
   }, [customerId])

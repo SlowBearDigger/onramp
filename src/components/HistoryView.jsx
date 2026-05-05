@@ -90,11 +90,8 @@ export default function HistoryView() {
             {isError && <span className="ml-2 text-[10px] uppercase tracking-wider font-bold text-error">· {t('history.errorBadge')}</span>}
           </p>
 
-          {/* push notifications opt-in. shown when supported + not yet
-              subscribed; tells the user that we'll ping them when the
-              order status changes (works even if the app is closed).
-              hidden when not supported (browsers without PushManager) or
-              already subscribed (then we show a discreet "active" badge). */}
+          {/* push notifications status — every state renders something
+              actionable so the user always understands what's happening. */}
           {push.state === 'unsubscribed' && wallet && (
             <button
               type="button"
@@ -109,18 +106,48 @@ export default function HistoryView() {
             <button
               type="button"
               onClick={push.unsubscribe}
-              className="mt-3 inline-flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-bold text-secondary hover:text-on-surface transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded"
+              className="mt-3 inline-flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-bold text-success hover:text-on-surface transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded"
               title={t('push.disableTooltip', { defaultValue: 'Click to disable' })}
             >
               <Bell size={11} weight="bold" aria-hidden="true" />
-              {t('push.active', { defaultValue: 'Notifications on' })}
+              {t('push.active', { defaultValue: 'Notifications on · click to disable' })}
             </button>
           )}
           {push.state === 'denied' && (
             <p className="mt-3 inline-flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-bold text-secondary">
               <BellSlash size={11} weight="bold" aria-hidden="true" />
-              {t('push.denied', { defaultValue: 'Notifications blocked in browser' })}
+              {t('push.denied', { defaultValue: 'Notifications blocked — re-allow in browser settings' })}
             </p>
+          )}
+          {push.state === 'ios-needs-pwa' && (
+            <div className="mt-3 inline-flex items-start gap-2 px-3 py-2 rounded-lg bg-tertiary/10 text-tertiary text-[11px] leading-snug max-w-sm">
+              <Bell size={13} weight="bold" aria-hidden="true" className="shrink-0 mt-0.5" />
+              <span>
+                {t('push.iosNeedsPwa', { defaultValue: 'On iPhone, tap the Share icon → "Add to Home Screen", then open the installed app to enable notifications.' })}
+              </span>
+            </div>
+          )}
+          {push.state === 'unsupported' && (
+            <p className="mt-3 inline-flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-bold text-secondary">
+              <BellSlash size={11} weight="bold" aria-hidden="true" />
+              {t('push.unsupported', { defaultValue: 'This browser does not support push notifications' })}
+            </p>
+          )}
+          {push.state === 'error' && (
+            <div className="mt-3 inline-flex items-start gap-2 max-w-sm">
+              <button
+                type="button"
+                onClick={push.subscribe}
+                className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-error/10 text-error text-xs font-bold hover:bg-error/15 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                title={push.error?.message}
+              >
+                <Bell size={14} weight="bold" aria-hidden="true" />
+                {t('push.retry', { defaultValue: 'Retry · enable notifications' })}
+              </button>
+            </div>
+          )}
+          {push.state === 'error' && push.error?.message && (
+            <p className="mt-1.5 text-[11px] text-error/80 leading-snug max-w-sm">{push.error.message}</p>
           )}
         </div>
 
