@@ -82,13 +82,14 @@ export function validateFrontendEvent(body) {
 }
 
 // map a validated frontend event to the canonical row shape.
-// id falls back to a random uuid so we always have a primary key — the
-// real mtpelerin order id comes through later if at all.
+// id is ALWAYS server-generated with the "mtpelerin-" prefix. attacker-
+// supplied orderId / partnerOrderId can't claim a row keyed to a real
+// transak or topper order, and can't replace an existing row by guessing
+// its id. partnerOrderId is still preserved for the audit trail (column
+// `partner_order_id`) but never used as the primary key.
 export function frontendEventToOrderRow(body) {
   const now = Date.now()
-  const id = (isString(body.orderId) && body.orderId) ||
-             (isString(body.partnerOrderId) && body.partnerOrderId) ||
-             `mtpelerin-${randomUUID()}`
+  const id = `mtpelerin-${randomUUID()}`
 
   const status = body.eventType === 'paymentSubmitted'
     ? 'PAYMENT_SUBMITTED_UNVERIFIED'

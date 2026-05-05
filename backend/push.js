@@ -76,11 +76,34 @@ const insertStmt = db.prepare(`
 `)
 
 const listByCustomerStmt = db.prepare(`SELECT * FROM push_subscriptions WHERE customer_id = ?`)
-const deleteByEndpointStmt = db.prepare(`DELETE FROM push_subscriptions WHERE endpoint = ?`)
+const countByCustomerStmt = db.prepare(`SELECT COUNT(*) AS n FROM push_subscriptions WHERE customer_id = ?`)
+// keyed delete: requires endpoint + p256dh + auth. an attacker who only
+// knows the endpoint (e.g. observed in the network tab once) can't
+// unsubscribe a victim — they need the full subscription material that
+// was generated client-side and sent only to our server.
+const deleteByKeyedStmt = db.prepare(`
+  DELETE FROM push_subscriptions
+  WHERE endpoint = ? AND keys_p256dh = ? AND keys_auth = ?
+`)
+
+// hard cap: at most this many subscriptions per wallet. raises the bar
+// for the IDOR attacker — they can't stuff hundreds of attacker-owned
+// endpoints under a victim's wallet to silently mirror push traffic.
+// real users have at most a few devices; 5 covers phone + tablet + laptop.
+export const MAX_SUBSCRIPTIONS_PER_CUSTOMER = 5
 
 export function saveSubscription({ customerId, endpoint, keys, userAgent }) {
   if (!customerId || !endpoint || !keys?.p256dh || !keys?.auth) {
     throw new Error('saveSubscription: missing required fields')
+  }
+  // enforce per-customer cap. ignore the cap when this exact endpoint
+  // already exists (the upsert will refresh keys, not add a row).
+  const existing = listByCustomerStmt.all(customerId)
+  const isExistingEndpoint = existing.some((s) => s.endpoint === endpoint)
+  if (!isExistingEndpoint && existing.length >= MAX_SUBSCRIPTIONS_PER_CUSTOMER) {
+    const err = new Error('subscription cap reached for this wallet')
+    err.code = 'cap_reached'
+    throw err
   }
   insertStmt.run({
     customer_id: String(customerId).slice(0, 96),
@@ -92,8 +115,11 @@ export function saveSubscription({ customerId, endpoint, keys, userAgent }) {
   })
 }
 
-export function deleteSubscription(endpoint) {
-  return deleteByEndpointStmt.run(endpoint).changes
+// unsubscribe requires the full keyed material so an attacker who only
+// observed an endpoint URL can't silence a victim's notifications.
+export function deleteSubscription({ endpoint, keys }) {
+  if (!endpoint || !keys?.p256dh || !keys?.auth) return 0
+  return deleteByKeyedStmt.run(endpoint, keys.p256dh, keys.auth).changes
 }
 
 // canonical status → human-readable title/body.
@@ -150,8 +176,9 @@ export async function sendOrderPush(order) {
       } catch (err) {
         const status = err?.statusCode
         if (status === 404 || status === 410) {
-          // gone — drop it.
-          deleteByEndpointStmt.run(sub.endpoint)
+          // gone — drop it. internal cleanup uses the row's own keys
+          // (we trust our own DB), not just the endpoint.
+          deleteByKeyedStmt.run(sub.endpoint, sub.keys_p256dh, sub.keys_auth)
         } else {
           // eslint-disable-next-line no-console
           console.warn('[push] send failed:', status || err?.message)

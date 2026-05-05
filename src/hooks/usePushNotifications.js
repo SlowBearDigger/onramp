@@ -140,10 +140,14 @@ export function usePushNotifications({ customerId } = {}) {
       const reg = await navigator.serviceWorker.ready
       const existing = await reg.pushManager.getSubscription()
       if (existing) {
+        // backend requires endpoint + keys for unsubscribe — without
+        // the keys an attacker who saw the endpoint URL could silence
+        // notifications for any wallet. send the full subscription.
+        const subJson = existing.toJSON()
         await fetch(`${API_BASE}/api/push/unsubscribe`, {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ endpoint: existing.endpoint }),
+          body: JSON.stringify({ endpoint: subJson.endpoint, keys: subJson.keys }),
         }).catch(() => { /* swallow — we still want to drop the local sub */ })
         await existing.unsubscribe()
       }

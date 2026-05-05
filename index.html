@@ -3,6 +3,34 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <!-- Content Security Policy.
+         GitHub Pages does not let us set CSP via headers, so we ship it
+         via meta. allowed sources:
+         - self, blob/data for images + fonts
+         - fontshare + google fonts CDNs (loaded by index.html non-blocking)
+         - coingecko (live ticker fetch)
+         - the deployed backend on Render (api + push + webhook URLs)
+         - provider iframes (transak / mtpelerin / topper) for the widget
+         - 'unsafe-inline' for styles is required by Tailwind 4 (it injects
+           a single <style> tag at runtime). 'unsafe-inline' is NOT allowed
+           for scripts — XSS payloads land neutered.
+    -->
+    <meta http-equiv="Content-Security-Policy" content="
+      default-src 'self';
+      script-src 'self';
+      style-src 'self' 'unsafe-inline' https://api.fontshare.com https://fonts.googleapis.com;
+      font-src 'self' https://cdn.fontshare.com https://fonts.gstatic.com data:;
+      img-src 'self' data: blob: https:;
+      connect-src 'self' https://onramp-backend.onrender.com https://api.coingecko.com https://api.fontshare.com https://fonts.googleapis.com https://fonts.gstatic.com;
+      frame-src https://global.transak.com https://global-stg.transak.com https://staging-global.transak.com https://widget.mtpelerin.com https://app.topperpay.com https://app.sandbox.topperpay.com;
+      worker-src 'self';
+      manifest-src 'self';
+      object-src 'none';
+      base-uri 'self';
+      form-action 'self';
+      frame-ancestors 'none';
+      upgrade-insecure-requests;
+    " />
     <title>On-Ramp | Premium Crypto Gateway</title>
     <meta name="description" content="Buy and sell crypto in seconds — no signup required. Best rates guaranteed through smart routing across trusted on-ramp providers." />
     <meta name="theme-color" content="#f9f9f9" media="(prefers-color-scheme: light)" />

@@ -125,6 +125,14 @@ app.use(cors({
 const apiLimiter = rateLimit({ windowMs: 60_000, max: 60, standardHeaders: true, legacyHeaders: false })
 const webhookLimiter = rateLimit({ windowMs: 60_000, max: 60, standardHeaders: true, legacyHeaders: false })
 
+// dedicated tighter limiters for endpoints that consume upstream quota
+// or are abuse-prone. each call to /widget-url mints a real Transak
+// session (counts against our partner quota); each /api/push/subscribe
+// writes to the DB. global 60/min is too lax for these.
+const widgetUrlLimiter = rateLimit({ windowMs: 60_000, max: 10, standardHeaders: true, legacyHeaders: false })
+const pushSubscribeLimiter = rateLimit({ windowMs: 60_000, max: 10, standardHeaders: true, legacyHeaders: false })
+const mtpelerinEventLimiter = rateLimit({ windowMs: 60_000, max: 10, standardHeaders: true, legacyHeaders: false })
+
 // topper webhook needs the RAW body (the detached JWS signs the bytes
 // verbatim). mount it BEFORE express.json so req.body is a Buffer here.
 app.post(
@@ -133,7 +141,10 @@ app.post(
   express.raw({ type: 'application/json', limit: '50kb' }),
   async (req, res) => {
     if (!isTopperEnabled()) {
-      return res.status(503).json({ error: 'topper_not_configured' })
+      // 404 instead of 503 to avoid confirming the route exists when
+      // topper isn't configured. attacker can't tell whether we just
+      // don't have topper yet vs the route is wrong.
+      return res.status(404).json({ error: 'not_found' })
     }
     try {
       const sig = req.headers['x-topper-jws-signature']
@@ -154,15 +165,12 @@ app.post(
 // every OTHER route uses parsed JSON.
 app.use(express.json({ limit: '50kb' }))
 
-// health.
+// health. minimal response — earlier versions exposed env name + which
+// providers/admin were configured, which gave a recon attacker a free
+// service map. now /healthz says only "yes I'm alive" — uptime probes
+// are happy, attackers learn nothing.
 app.get('/healthz', (_req, res) => {
-  res.json({
-    ok: true,
-    env: TRANSAK_ENV,
-    topper: isTopperEnabled(),
-    admin: isAdminEnabled(),
-    ts: Date.now(),
-  })
+  res.json({ ok: true })
 })
 
 // orders API.
@@ -418,7 +426,24 @@ app.post('/api/providers/topper/bootstrap', apiLimiter, async (req, res) => {
 // the partner backend mints the widget URL via transak's session API. the
 // returned URL embeds a session token and is single-use, 5-minute TTL.
 // frontend gets a fresh URL per startOrder call.
-app.post('/api/providers/transak/widget-url', apiLimiter, async (req, res) => {
+// allowlist for redirectURL on widget-url. attacker-supplied redirect URLs
+// can otherwise become phishing vectors (`javascript:` URI executes in
+// transak's widget context, attacker.com receives post-purchase users).
+// only allow our own deployed domains, plus localhost for dev.
+function isAllowedRedirectURL(url) {
+  if (typeof url !== 'string' || url.length > 1024) return false
+  let parsed
+  try { parsed = new URL(url) } catch { return false }
+  if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') return false
+  // CORS_ORIGIN already lists our own frontend origins; reuse the set.
+  // also accept any path under those origins.
+  const allowedHosts = CORS_ORIGIN
+    .map((o) => { try { return new URL(o).host } catch { return null } })
+    .filter(Boolean)
+  return allowedHosts.includes(parsed.host)
+}
+
+app.post('/api/providers/transak/widget-url', widgetUrlLimiter, async (req, res) => {
   if (!isTransakWidgetConfigured()) {
     return res.status(503).json({ error: 'transak_not_configured' })
   }
@@ -443,6 +468,20 @@ app.post('/api/providers/transak/widget-url', apiLimiter, async (req, res) => {
   if (body.partnerOrderId && !ORDER_ID_RE.test(String(body.partnerOrderId))) errors.push('partnerOrderId')
   if (body.partnerCustomerId && !CUSTOMER_ID_RE.test(String(body.partnerCustomerId))) errors.push('partnerCustomerId')
   if (body.theme && body.theme !== 'light' && body.theme !== 'dark') errors.push('theme')
+  // redirectURL: must be an https/http URL whose host is in CORS_ORIGIN.
+  // anything else (javascript:, data:, file:, attacker.com) is rejected
+  // outright. drops the field if invalid rather than leaking back to the
+  // attacker which check failed.
+  let safeRedirectURL
+  if (body.redirectURL != null) {
+    if (isAllowedRedirectURL(body.redirectURL)) {
+      safeRedirectURL = body.redirectURL
+    } else {
+      errors.push('redirectURL')
+    }
+  }
+  // email field is unused server-side and would only widen the attack
+  // surface (logging, transak forwarding). drop it silently.
 
   if (errors.length) {
     return res.status(400).json({ error: 'invalid_input', fields: errors })
@@ -459,10 +498,9 @@ app.post('/api/providers/transak/widget-url', apiLimiter, async (req, res) => {
       walletAddress: body.walletAddress,
       partnerOrderId: body.partnerOrderId,
       partnerCustomerId: body.partnerCustomerId,
-      email: body.email,
       themeColor: body.themeColor,
       theme: body.theme,
-      redirectURL: body.redirectURL,
+      redirectURL: safeRedirectURL,
     })
     res.json(result)
   } catch (err) {
@@ -484,14 +522,27 @@ app.post('/api/providers/transak/widget-url', apiLimiter, async (req, res) => {
 // here so the admin dashboard can show analytics — flagged unverified=1.
 // note: anyone with devtools could forge these, so use them only as
 // best-effort signal, not authoritative volume.
-app.post('/api/providers/mtpelerin/event', apiLimiter, (req, res) => {
+app.post('/api/providers/mtpelerin/event', mtpelerinEventLimiter, (req, res) => {
   try {
     validateMtPelerinEvent(req.body)
   } catch (err) {
     return res.status(400).json({ error: 'invalid_input', detail: err.message })
   }
   try {
-    const row = mtpelerinEventToRow(req.body)
+    // strip attacker-controllable id fields. mtpelerin doesn't expose
+    // webhooks so we have no source of truth; the row id MUST be server-
+    // generated to prevent collision with legitimate orders or
+    // replacement of existing rows. partnerOrderId/walletAddress remain
+    // client-supplied (validated by the regex above).
+    const sanitized = { ...req.body }
+    delete sanitized.orderId
+    const row = mtpelerinEventToRow(sanitized)
+    // belt-and-suspenders: even though the canonical row builder doesn't
+    // honor body.id, force the id to start with "mtpelerin-" so it can
+    // never collide with a transak/topper order id.
+    if (!row.id || !row.id.startsWith('mtpelerin-')) {
+      return res.status(500).json({ error: 'id_generation_failed' })
+    }
     upsertOrder(row)
     res.json({ ok: true, id: row.id, unverified: true })
   } catch (err) {
@@ -619,7 +670,7 @@ app.get('/api/push/vapid-public-key', apiLimiter, (req, res) => {
   res.json({ publicKey: getPushPublicKey() })
 })
 
-app.post('/api/push/subscribe', apiLimiter, (req, res) => {
+app.post('/api/push/subscribe', pushSubscribeLimiter, (req, res) => {
   if (!isPushEnabled()) return res.status(503).json({ error: 'push_not_configured' })
   const body = req.body || {}
   if (typeof body.customerId !== 'string' || !CUSTOMER_ID_RE.test(body.customerId)) {
@@ -643,17 +694,28 @@ app.post('/api/push/subscribe', apiLimiter, (req, res) => {
     })
     res.json({ ok: true })
   } catch (err) {
+    if (err?.code === 'cap_reached') {
+      return res.status(429).json({ error: 'subscription_cap_reached' })
+    }
     console.error('[push subscribe] failed:', err?.message)
     res.status(500).json({ error: 'subscribe_failed' })
   }
 })
 
-app.post('/api/push/unsubscribe', apiLimiter, (req, res) => {
-  const endpoint = req.body?.endpoint
+app.post('/api/push/unsubscribe', pushSubscribeLimiter, (req, res) => {
+  // unsubscribe requires the FULL subscription material (endpoint + p256dh
+  // + auth). prevents an attacker who only saw the endpoint URL from
+  // silencing a victim's push notifications.
+  const body = req.body || {}
+  const endpoint = body.endpoint
+  const keys = body.keys
   if (typeof endpoint !== 'string' || !/^https:\/\//.test(endpoint)) {
     return res.status(400).json({ error: 'invalid_endpoint' })
   }
-  const removed = deletePushSubscription(endpoint)
+  if (!keys || typeof keys.p256dh !== 'string' || typeof keys.auth !== 'string') {
+    return res.status(400).json({ error: 'missing_keys' })
+  }
+  const removed = deletePushSubscription({ endpoint, keys })
   res.json({ ok: true, removed })
 })
 

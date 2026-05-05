@@ -98,12 +98,18 @@ describe('mtpelerin.frontendEventToOrderRow', () => {
     expect(row.id).toMatch(/^mtpelerin-[0-9a-f-]{36}$/)
   })
 
-  it('uses partnerOrderId as id when no orderId', () => {
-    const row = frontendEventToOrderRow({
+  it('always uses a server-generated id, regardless of body.orderId or partnerOrderId', () => {
+    // attacker can't claim a chosen id by setting body.orderId or
+    // body.partnerOrderId; both are ignored for the primary key.
+    const row1 = frontendEventToOrderRow({
       eventType: 'orderCreated',
-      partnerOrderId: 'partner_42',
+      orderId: 'forged-id-collision-with-real-transak-order',
+      partnerOrderId: 'forged-partner-id',
     })
-    expect(row.id).toBe('partner_42')
+    expect(row1.id).toMatch(/^mtpelerin-[0-9a-f-]{36}$/)
+    expect(row1.id).not.toContain('forged')
+    // partner_order_id column is still preserved for forensics.
+    expect(row1.partner_order_id).toBe('forged-partner-id')
   })
 
   it('falls back to walletAddress for customer_id when partnerCustomerId missing', () => {
