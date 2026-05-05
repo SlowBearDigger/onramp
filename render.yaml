@@ -37,6 +37,11 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      # pin to Node 20 LTS — better-sqlite3 11.x doesn't support v8 API
+      # changes in Node 23+. prebuilt binaries also exist for 20, so the
+      # build skips native compile entirely.
+      - key: NODE_VERSION
+        value: '20'
       # PORT is auto-injected by Render; our app reads process.env.PORT.
       - key: TRANSAK_ENV
         value: STAGING
