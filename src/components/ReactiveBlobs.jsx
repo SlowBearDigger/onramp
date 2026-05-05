@@ -195,6 +195,15 @@ export default function ReactiveBlobs({ color = '#047857', className = '', warpP
           filter: 'blur(80px)',
           borderRadius: '50% 45% 55% 50% / 50% 55% 45% 50%',
         }}
+        // initial = first frame of the animate keyframes. without this,
+        // motion mounts the element with NO transform applied, then
+        // applies the keyframe transform in the next frame — Lighthouse's
+        // CLS observer catches that one-frame jump from "no transform" to
+        // "transform: translate(0,0) scale(1)" as a layout shift, even
+        // though visually nothing moves. setting initial to the same
+        // values as the first keyframe makes the first paint match the
+        // animate target.
+        initial={{ x: 0, y: 0, scale: 1, opacity: 0.15 }}
         animate={
           loopActive
             ? {
@@ -251,6 +260,7 @@ export default function ReactiveBlobs({ color = '#047857', className = '', warpP
           filter: 'blur(70px)',
           borderRadius: '55% 45% 50% 50% / 50% 55% 45% 50%',
         }}
+        initial={{ x: 0, y: 0, scale: 1, opacity: 0.09 }}
         animate={
           loopActive
             ? {
@@ -295,6 +305,7 @@ export default function ReactiveBlobs({ color = '#047857', className = '', warpP
           filter: 'blur(60px)',
           borderRadius: '50% 50% 45% 55% / 55% 45% 50% 50%',
         }}
+        initial={{ x: 0, y: 0, scale: 0.97, opacity: 0.12 }}
         animate={
           loopActive
             ? {
