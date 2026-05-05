@@ -1,0 +1,12 @@
+{
+  "version": "1.159.0",
+  "results": [],
+  "errors": [],
+  "paths": {
+    "scanned": [
+      "app.js",
+      "db.js",
+      "transak.js"
+    ]
+  }
+}

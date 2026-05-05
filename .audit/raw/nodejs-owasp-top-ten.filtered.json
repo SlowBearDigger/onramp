@@ -1,0 +1,17 @@
+{
+  "version": "1.159.0",
+  "results": [],
+  "errors": [],
+  "paths": {
+    "scanned": [
+      ".env.example",
+      ".gitignore",
+      "README.md",
+      "app.js",
+      "db.js",
+      "package-lock.json",
+      "package.json",
+      "transak.js"
+    ]
+  }
+}

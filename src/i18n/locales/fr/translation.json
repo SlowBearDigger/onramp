@@ -1,0 +1,220 @@
+{
+  "privacyDisclosure": {
+    "aria": "Avis de confidentialité",
+    "title": "Votre vie privée",
+    "body": "Nous n'utilisons ni analytics ni traceurs publicitaires. Votre wallet, thème et activité récente sont stockés uniquement dans ce navigateur.",
+    "readMore": "Lire la politique",
+    "cta": "Compris",
+    "dismiss": "Fermer"
+  },
+  "common": {
+    "loading": "Chargement…",
+    "back": "Retour",
+    "close": "Fermer",
+    "open": "Ouvrir",
+    "continue": "Continuer",
+    "cancel": "Annuler",
+    "providerName": "Fournisseur",
+    "switchToLight": "Passer en mode clair",
+    "switchToDark": "Passer en mode sombre",
+    "toggleMenu": "Afficher/masquer le menu"
+  },
+  "header": {
+    "subtitle": "agrégateur",
+    "openApp": "Ouvrir"
+  },
+  "footer": {
+    "tagline": "© {{year}} OnRamp. Interface d'agrégation — les fournisseurs gèrent la garde et le KYC.",
+    "privacyPolicy": "Politique de confidentialité",
+    "termsOfService": "Conditions d'utilisation"
+  },
+  "language": {
+    "label": "Langue",
+    "en": "English",
+    "es": "Español",
+    "fr": "Français",
+    "de": "Deutsch"
+  },
+  "landing": {
+    "trustBadge": "Plébiscité par plus d'un million d'utilisateurs dans le monde",
+    "titlePart1": "La façon la plus simple d'",
+    "titlePart2": "acheter des cryptos.",
+    "subtitle": "Pas d'inscription. Comparez les meilleurs fournisseurs d'on-ramp en un seul endroit et profitez des frais les plus bas du marché avec une livraison ultra-rapide directement vers votre portefeuille.",
+    "buyNow": "Acheter maintenant",
+    "viewHistory": "Voir l'historique",
+    "chips": {
+      "nonCustodial": "Non-custodial",
+      "noSignup": "Sans inscription",
+      "instantDelivery": "Livraison immédiate"
+    },
+    "features": {
+      "heading": "Conçu pour la simplicité.",
+      "subheading": "Nous avons supprimé les barrières d'entrée pour rendre l'accès à la finance décentralisée plus facile que jamais.",
+      "noSignup": {
+        "title": "Sans inscription",
+        "desc": "Pas de création de compte. Achetez des cryptos en quelques secondes — la vérification d'identité est effectuée en toute sécurité par nos partenaires fournisseurs uniquement lorsque c'est nécessaire."
+      },
+      "bestRates": {
+        "title": "Meilleurs taux du marché",
+        "desc": "Notre moteur de smart-routing agrège la liquidité des principales plateformes pour vous garantir le meilleur prix à chaque transaction."
+      },
+      "instant": {
+        "title": "Livraison immédiate",
+        "desc": "Aucune attente. Dès que le paiement est confirmé, vos actifs numériques sont envoyés immédiatement vers votre portefeuille privé."
+      }
+    },
+    "howItWorks": "Comment ça marche"
+  },
+  "quickPurchase": {
+    "title": "Achat rapide",
+    "openFull": "Ouvrir l'interface complète",
+    "youPay": "Vous payez",
+    "youReceive": "Vous recevez",
+    "rate": "Taux",
+    "fee": "Frais",
+    "feeValue": "{{value}} (Promo)",
+    "continue": "Continuer",
+    "swapToSell": "Passer au flux de vente",
+    "exampleHint": "Exemple"
+  },
+  "swap": {
+    "tabs": {
+      "buy": "Acheter",
+      "sell": "Vendre"
+    },
+    "labels": {
+      "youPay": "Vous payez",
+      "youSend": "Vous envoyez",
+      "youReceive": "Vous recevez",
+      "youGet": "Vous obtenez",
+      "bestRate": "Meilleur taux",
+      "inUsd": "en USD",
+      "onNetwork": "sur {{network}}",
+      "walletAddress": "Adresse du portefeuille",
+      "payoutAddress": "Adresse de paiement",
+      "paymentMethod": "Mode de paiement",
+      "payoutMethod": "Mode de versement",
+      "estimated": "Estimé"
+    },
+    "placeholders": {
+      "amount": "0,00",
+      "walletAddress": "Entrez l'adresse de votre portefeuille",
+      "payoutAddress": "Entrez votre compte bancaire ou de versement"
+    },
+    "errors": {
+      "walletRequired": "Veuillez fournir une adresse {{network}} valide pour continuer",
+      "payoutRequired": "Indiquez où recevoir vos fonds"
+    },
+    "providersHint": "Nous comparerons {{count}} fournisseurs pour vous à l'étape suivante",
+    "cta": {
+      "continue": "Continuer — comparer les fournisseurs",
+      "needAmountAndPayout": "Saisissez un montant et une adresse de paiement",
+      "needWallet": "Saisissez l'adresse d'un portefeuille pour continuer"
+    },
+    "footer": {
+      "disclaimer": "Les frais et les délais varient selon le fournisseur. La vérification d'identité est gérée par le fournisseur que vous choisissez. En continuant, vous acceptez nos",
+      "andTo": "et",
+      "transactionsFinal": "Toutes les transactions sont définitives.",
+      "demoMode": "Mode démo — aucun paiement réel n'est traité"
+    },
+    "swapToBuy": "Passer à l'achat",
+    "swapToSell": "Passer à la vente"
+  },
+  "compare": {
+    "heading": "Comparer les fournisseurs de {{symbol}}",
+    "footnote": "Choisissez un fournisseur pour continuer. Le prix final, les frais et la vérification d'identité sont confirmés dans le flux sécurisé du fournisseur.",
+    "card": {
+      "fetching": "Récupération du devis en direct…",
+      "unavailable": "Devis indisponible — ouvrez le widget pour le prix en direct",
+      "feeLabel": "Frais :",
+      "unverifiedBadge": "non vérifié",
+      "unverifiedTitle": "Statut non vérifié par webhook pour ce fournisseur"
+    },
+    "badges": {
+      "bestRate": "Meilleur taux",
+      "lowestFee": "Frais les plus bas"
+    },
+    "ariaLabel": {
+      "loading": "Choisir {{name}} — récupération du devis",
+      "ok": "Choisir {{name}} — recevoir {{amount}} {{symbol}}, frais {{fiatSymbol}}{{fee}} {{fiatCode}}{{badgeSuffix}}{{unverifiedSuffix}}",
+      "unavailable": "Choisir {{name}} — devis indisponible, ouvrez le widget pour le prix en direct",
+      "badgeSuffix": ", {{badge}}",
+      "unverifiedSuffix": ", statut non vérifié par webhook"
+    }
+  },
+  "modal": {
+    "securePayment": "{{provider}} — Paiement sécurisé",
+    "poweredBy": "Propulsé par {{provider}} — chiffrement 256 bits",
+    "closeAria": "Fermer le paiement de {{provider}}",
+    "iframeTitle": "Widget de paiement {{provider}}"
+  },
+  "skipLink": {
+    "main": "Aller au contenu",
+    "admin": "Aller au tableau de bord"
+  },
+  "legal": {
+    "noticeNotInLanguage": "Cette page n'est disponible qu'en anglais. Consultez un conseiller anglophone si vous avez besoin de précisions."
+  },
+  "notFound": {
+    "title": "Page introuvable",
+    "subtitle": "Le lien est peut-être rompu ou la page a été déplacée. On vous ramène à l'accueil.",
+    "backHome": "Retour à l'accueil"
+  },
+  "history": {
+    "localStorageNotice": "Votre dernière adresse de portefeuille est mémorisée dans ce navigateur afin d'afficher votre historique sans compte. Effacez les données du navigateur ou changez d'appareil pour réinitialiser.",
+    "title": "Historique des transactions",
+    "count_one": "{{count}} transaction",
+    "count_other": "{{count}} transactions",
+    "demoBadge": "Données démo",
+    "errorBadge": "Échec du chargement — réessayer",
+    "loading": "Chargement de vos transactions…",
+    "emptyAllTitle": "Aucune transaction pour le moment",
+    "emptyFilteredTitle": "Aucune transaction de {{filter}} pour le moment",
+    "emptyAllDesc": "Lorsque vous achetez ou vendez de la crypto via l'application, vos transactions apparaîtront ici.",
+    "emptyFilteredDesc": "Passez à \"Toutes\" pour voir tout, ou démarrez une commande de {{filter}}.",
+    "emptyCta": "Acheter de la crypto",
+    "filters": {
+      "all": "Toutes",
+      "buy": "Achats",
+      "sell": "Ventes"
+    },
+    "status": {
+      "completed": "Terminée",
+      "pending": "En attente",
+      "failed": "Échouée",
+      "detail": {
+        "awaitingPayment": "En attente de votre paiement",
+        "paymentMarked": "Confirmation de paiement en attente",
+        "processing": "Traitement par le fournisseur",
+        "paymentSubmittedUnverified": "Paiement soumis (non vérifié)",
+        "createdUnverified": "Commande créée (non vérifiée)",
+        "completed": "Terminée",
+        "failed": "Échouée",
+        "cancelled": "Annulée",
+        "expired": "Expirée",
+        "refunded": "Remboursée",
+        "unknown": "Statut inconnu"
+      }
+    },
+    "live": {
+      "checking": "Vérification…",
+      "lastUpdated": "Il y a {{age}}",
+      "refresh": "Actualiser maintenant"
+    },
+    "unverified": {
+      "label": "Non vérifié",
+      "tooltip": "Le statut de cette commande provient du widget web du fournisseur, pas d'un webhook signé. À considérer comme provisoire jusqu'à confirmation on-chain."
+    },
+    "type": {
+      "buy": "ACHAT",
+      "sell": "VENTE"
+    },
+    "detail": {
+      "status": "Statut",
+      "wallet": "Portefeuille",
+      "provider": "Fournisseur",
+      "network": "Réseau",
+      "txHash": "Hash de Tx"
+    }
+  }
+}

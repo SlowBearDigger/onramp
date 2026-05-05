@@ -1,0 +1,78 @@
+name: Deploy frontend to GitHub Pages
+
+# Auto-deploys the Vite-built static frontend to GitHub Pages on every push
+# to main. The backend lives elsewhere (Render free tier — see render.yaml)
+# and is reached via VITE_API_BASE_URL injected at build time.
+#
+# Setup once per repo:
+#   1. Repo Settings → Pages → "Source" = "GitHub Actions"
+#   2. Repo Settings → Secrets and variables → Actions → Variables → New
+#      repository variable: VITE_API_BASE_URL = https://<your-render-app>.onrender.com
+#   3. Push to main. Pages URL: https://<user>.github.io/<repo>/
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# only one deploy at a time. cancel any older in-flight deploy if a new
+# push lands so we never deploy stale code.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Build
+        env:
+          # base path = `/<repo-name>/` so assets resolve correctly under
+          # https://<user>.github.io/<repo>/. github.event.repository.name
+          # gives us the repo name without hardcoding.
+          BASE_PATH: /${{ github.event.repository.name }}/
+          # backend URL — set as a Repository Variable in Settings → Variables.
+          # falls through to '/api' (same-origin path) if unset, which only
+          # works if you're proxying via a custom domain.
+          VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
+          VITE_TRANSAK_ENV: STAGING
+          VITE_MTPELERIN_ENV: STAGING
+          VITE_TOPPER_ENV: STAGING
+          VITE_USE_MOCK: 'false'
+        run: npm run build
+
+      - name: Add SPA 404 fallback
+        # GitHub Pages serves /<repo>/<deep-route> as a 404 unless we
+        # provide a 404.html that re-serves the SPA shell. simplest fix:
+        # copy index.html → 404.html. the react-router catches the deep
+        # path on hydration and shows the right view.
+        run: cp dist/index.html dist/404.html
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

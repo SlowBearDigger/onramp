@@ -1,0 +1,28 @@
+node_modules
+dist
+.env
+.env.local
+.env.*.local
+*.log
+.DS_Store
+
+# sqlite + sidecar files (do not commit databases)
+data.db
+data.db-shm
+data.db-wal
+backend/data.db
+backend/data.db-shm
+backend/data.db-wal
+
+# backend deps + env
+backend/node_modules
+backend/.env
+
+# deploy artifacts (created by zip scripts, not source)
+*-deploy.zip
+
+# editor / scratch
+.vscode/
+.idea/
+*.swp
+txt.txt

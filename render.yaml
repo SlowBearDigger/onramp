@@ -1,0 +1,63 @@
+# Render Blueprint — declares the backend Web Service.
+#
+# Setup once:
+#   1. https://dashboard.render.com → New + → Blueprint
+#   2. Connect this GitHub repo
+#   3. Render auto-detects this file and creates the service
+#   4. Set the secrets in the Render UI (NOT here — these stay encrypted):
+#        ADMIN_USERNAME
+#        ADMIN_PASSWORD_HASH        (use bin/hash-admin-password.js)
+#        ADMIN_JWT_SECRET           (32+ random bytes, base64)
+#        TRANSAK_API_KEY
+#        TRANSAK_PARTNER_ACCESS_TOKEN
+#        TRANSAK_REFERRER_DOMAIN    (your GitHub Pages URL — see DEPLOY.md)
+#        CORS_ORIGIN                (your GitHub Pages URL)
+#   5. After first deploy, copy the Render service URL (e.g.
+#      https://onramp-backend.onrender.com) and add it as a GitHub
+#      repo Variable: VITE_API_BASE_URL.
+#   6. In Transak partner dashboard, add the webhook:
+#        <Render-URL>/webhook/transak/order
+#
+# Free tier caveats:
+#   - service sleeps after ~15 min of no traffic. cold start ~30s.
+#   - no persistent disk on free → SQLite resets on each redeploy.
+#     fine for staging/demo; for production add a paid disk via the
+#     Render UI (cheapest is $0.25/GB/mo) and set DB_PATH=/var/data/...
+
+services:
+  - type: web
+    name: onramp-backend
+    runtime: node
+    plan: free
+    region: oregon
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: node app.js
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # PORT is auto-injected by Render; our app reads process.env.PORT.
+      - key: TRANSAK_ENV
+        value: STAGING
+      - key: TRANSAK_WEBHOOK_INSECURE
+        value: 'false'
+      - key: MTPELERIN_ENV
+        value: STAGING
+      - key: TOPPER_ENV
+        value: STAGING
+      # secrets — set in the Render UI after the service is created.
+      - key: TRANSAK_API_KEY
+        sync: false
+      - key: TRANSAK_PARTNER_ACCESS_TOKEN
+        sync: false
+      - key: TRANSAK_REFERRER_DOMAIN
+        sync: false
+      - key: CORS_ORIGIN
+        sync: false
+      - key: ADMIN_USERNAME
+        sync: false
+      - key: ADMIN_PASSWORD_HASH
+        sync: false
+      - key: ADMIN_JWT_SECRET
+        sync: false

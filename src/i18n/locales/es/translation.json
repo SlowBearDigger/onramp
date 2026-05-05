@@ -1,0 +1,220 @@
+{
+  "privacyDisclosure": {
+    "aria": "Aviso de privacidad",
+    "title": "Tu privacidad",
+    "body": "No usamos analytics ni trackers de publicidad. Tu wallet, tema y actividad reciente se guardan solo en este navegador.",
+    "readMore": "Leer la política",
+    "cta": "Entendido",
+    "dismiss": "Cerrar"
+  },
+  "common": {
+    "loading": "Cargando…",
+    "back": "Atrás",
+    "close": "Cerrar",
+    "open": "Abrir",
+    "continue": "Continuar",
+    "cancel": "Cancelar",
+    "providerName": "Proveedor",
+    "switchToLight": "Cambiar a modo claro",
+    "switchToDark": "Cambiar a modo oscuro",
+    "toggleMenu": "Mostrar/ocultar menú"
+  },
+  "header": {
+    "subtitle": "agregador",
+    "openApp": "Abrir"
+  },
+  "footer": {
+    "tagline": "© {{year}} OnRamp. Interfaz agregadora — los proveedores manejan custodia y KYC.",
+    "privacyPolicy": "Política de privacidad",
+    "termsOfService": "Términos de servicio"
+  },
+  "language": {
+    "label": "Idioma",
+    "en": "English",
+    "es": "Español",
+    "fr": "Français",
+    "de": "Deutsch"
+  },
+  "landing": {
+    "trustBadge": "Confiado por más de 1M de usuarios en todo el mundo",
+    "titlePart1": "La forma más sencilla de ",
+    "titlePart2": "comprar cripto.",
+    "subtitle": "Sin registro. Compara los principales proveedores de on-ramp en un solo lugar y obtén las comisiones más bajas con entrega inmediata directamente a tu wallet.",
+    "buyNow": "Comprar ahora",
+    "viewHistory": "Ver historial",
+    "chips": {
+      "nonCustodial": "No-Custodial",
+      "noSignup": "Sin registro",
+      "instantDelivery": "Entrega instantánea"
+    },
+    "features": {
+      "heading": "Diseñado para la simplicidad.",
+      "subheading": "Hemos eliminado las barreras de entrada para que sea más fácil que nunca entrar al mundo de las finanzas descentralizadas.",
+      "noSignup": {
+        "title": "Sin registro",
+        "desc": "Olvídate de crear cuenta. Compra cripto en segundos — la verificación de identidad la realizan de forma segura nuestros proveedores aliados solo cuando sea necesario."
+      },
+      "bestRates": {
+        "title": "Mejores tarifas del mercado",
+        "desc": "Nuestro motor de smart-routing agrega liquidez de los principales exchanges para asegurarte siempre el mejor precio."
+      },
+      "instant": {
+        "title": "Entrega instantánea",
+        "desc": "Sin tiempos de espera. Una vez confirmado el pago, tus activos digitales se envían inmediatamente a tu wallet privada."
+      }
+    },
+    "howItWorks": "Cómo funciona"
+  },
+  "quickPurchase": {
+    "title": "Compra rápida",
+    "openFull": "Abrir interfaz completa",
+    "youPay": "Pagas",
+    "youReceive": "Recibes",
+    "rate": "Tasa",
+    "fee": "Comisión",
+    "feeValue": "{{value}} (Promo)",
+    "continue": "Continuar",
+    "swapToSell": "Cambiar a flujo de venta",
+    "exampleHint": "Ejemplo"
+  },
+  "swap": {
+    "tabs": {
+      "buy": "Comprar",
+      "sell": "Vender"
+    },
+    "labels": {
+      "youPay": "Pagas",
+      "youSend": "Envías",
+      "youReceive": "Recibes",
+      "youGet": "Obtienes",
+      "bestRate": "Mejor tasa",
+      "inUsd": "en USD",
+      "onNetwork": "en {{network}}",
+      "walletAddress": "Dirección de wallet",
+      "payoutAddress": "Dirección de pago",
+      "paymentMethod": "Método de pago",
+      "payoutMethod": "Método de cobro",
+      "estimated": "Estimado"
+    },
+    "placeholders": {
+      "amount": "0,00",
+      "walletAddress": "Introduce la dirección de wallet",
+      "payoutAddress": "Introduce la cuenta bancaria o de cobro"
+    },
+    "errors": {
+      "walletRequired": "Introduce una dirección {{network}} válida para continuar",
+      "payoutRequired": "Indica dónde recibir tus fondos"
+    },
+    "providersHint": "Compararemos {{count}} proveedores para ti en el siguiente paso",
+    "cta": {
+      "continue": "Continuar — comparar proveedores",
+      "needAmountAndPayout": "Introduce el monto y la dirección de cobro",
+      "needWallet": "Introduce una dirección de wallet para continuar"
+    },
+    "footer": {
+      "disclaimer": "Las comisiones y tiempos varían según el proveedor. La verificación de identidad la realiza el proveedor que elijas. Al continuar, aceptas nuestros",
+      "andTo": "y",
+      "transactionsFinal": "Todas las transacciones son finales.",
+      "demoMode": "Modo demo — no se procesa ningún pago real"
+    },
+    "swapToBuy": "Cambiar a comprar",
+    "swapToSell": "Cambiar a vender"
+  },
+  "compare": {
+    "heading": "Compara proveedores de {{symbol}}",
+    "footnote": "Elige un proveedor para continuar. El precio final, las comisiones y la verificación de identidad se confirman dentro del flujo seguro del proveedor.",
+    "card": {
+      "fetching": "Obteniendo cotización en vivo…",
+      "unavailable": "Cotización no disponible — abre el widget para precio en vivo",
+      "feeLabel": "Comisión:",
+      "unverifiedBadge": "no verificado",
+      "unverifiedTitle": "Estado no verificado por webhook para este proveedor"
+    },
+    "badges": {
+      "bestRate": "Mejor tasa",
+      "lowestFee": "Comisión más baja"
+    },
+    "ariaLabel": {
+      "loading": "Elegir {{name}} — obteniendo cotización",
+      "ok": "Elegir {{name}} — recibir {{amount}} {{symbol}}, comisión {{fiatSymbol}}{{fee}} {{fiatCode}}{{badgeSuffix}}{{unverifiedSuffix}}",
+      "unavailable": "Elegir {{name}} — cotización no disponible, abrir widget para precio en vivo",
+      "badgeSuffix": ", {{badge}}",
+      "unverifiedSuffix": ", estado no verificado por webhook"
+    }
+  },
+  "modal": {
+    "securePayment": "{{provider}} — Pago seguro",
+    "poweredBy": "Procesado por {{provider}} — cifrado de 256 bits",
+    "closeAria": "Cerrar pago de {{provider}}",
+    "iframeTitle": "Widget de pago de {{provider}}"
+  },
+  "skipLink": {
+    "main": "Saltar al contenido",
+    "admin": "Saltar al panel"
+  },
+  "legal": {
+    "noticeNotInLanguage": "Esta página solo está disponible en inglés. Consulta a un asesor de habla inglesa si necesitas aclaraciones."
+  },
+  "notFound": {
+    "title": "No encontramos esa página",
+    "subtitle": "El enlace puede estar roto o la página se ha movido. Te llevamos de vuelta al inicio.",
+    "backHome": "Volver al inicio"
+  },
+  "history": {
+    "localStorageNotice": "Tu última dirección de wallet se guarda en este navegador para mostrarte el historial sin necesidad de cuenta. Borra los datos del navegador o cambia de dispositivo para reiniciar.",
+    "title": "Historial de transacciones",
+    "count_one": "{{count}} transacción",
+    "count_other": "{{count}} transacciones",
+    "demoBadge": "Datos demo",
+    "errorBadge": "No se pudo cargar — reintentar",
+    "loading": "Cargando tus transacciones…",
+    "emptyAllTitle": "Aún no hay transacciones",
+    "emptyFilteredTitle": "Aún no hay transacciones de {{filter}}",
+    "emptyAllDesc": "Cuando compres o vendas cripto desde la app, tus transacciones aparecerán aquí.",
+    "emptyFilteredDesc": "Cambia a \"Todas\" para ver todo, o inicia una orden de {{filter}}.",
+    "emptyCta": "Comprar cripto",
+    "filters": {
+      "all": "Todas",
+      "buy": "Compras",
+      "sell": "Ventas"
+    },
+    "status": {
+      "completed": "Completada",
+      "pending": "Pendiente",
+      "failed": "Fallida",
+      "detail": {
+        "awaitingPayment": "Esperando tu pago",
+        "paymentMarked": "Confirmación de pago pendiente",
+        "processing": "Procesando con el proveedor",
+        "paymentSubmittedUnverified": "Pago enviado (sin verificar)",
+        "createdUnverified": "Orden creada (sin verificar)",
+        "completed": "Completada",
+        "failed": "Fallida",
+        "cancelled": "Cancelada",
+        "expired": "Expirada",
+        "refunded": "Reembolsada",
+        "unknown": "Estado desconocido"
+      }
+    },
+    "live": {
+      "checking": "Verificando…",
+      "lastUpdated": "Hace {{age}}",
+      "refresh": "Actualizar ahora"
+    },
+    "unverified": {
+      "label": "Sin verificar",
+      "tooltip": "El estado de esta orden proviene del widget web del proveedor, no de un webhook firmado. Confírmala on-chain antes de darla por hecha."
+    },
+    "type": {
+      "buy": "COMPRA",
+      "sell": "VENTA"
+    },
+    "detail": {
+      "status": "Estado",
+      "wallet": "Wallet",
+      "provider": "Proveedor",
+      "network": "Red",
+      "txHash": "Hash de Tx"
+    }
+  }
+}

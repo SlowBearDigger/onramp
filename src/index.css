@@ -1,0 +1,182 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  /* ── Light mode tokens (emerald-tinted neutrals) ── */
+  --color-primary: #047857;
+  --color-primary-container: #42b051;
+  --color-primary-fixed: #8cfb91;
+  --color-primary-fixed-dim: #70dd78;
+  --color-inverse-primary: #70dd78;
+  --color-on-primary: #f0fdf4;
+  --color-on-primary-container: #003c0f;
+  --color-on-primary-fixed: #002105;
+  --color-on-primary-fixed-variant: #005318;
+  --color-secondary: #5a6b60;
+  --color-secondary-container: #dfe6e0;
+  --color-secondary-fixed: #e5e2e1;
+  --color-secondary-fixed-dim: #c8c6c5;
+  --color-on-secondary: #f0fdf4;
+  --color-on-secondary-container: #3a4a3f;
+  --color-on-secondary-fixed: #1b1b1c;
+  --color-on-secondary-fixed-variant: #474746;
+  --color-tertiary: #705d00;
+  --color-tertiary-container: #c9a900;
+  --color-tertiary-fixed: #ffe16d;
+  --color-tertiary-fixed-dim: #e9c400;
+  --color-on-tertiary: #f0fdf4;
+  --color-on-tertiary-container: #4c3e00;
+  --color-on-tertiary-fixed: #221b00;
+  --color-on-tertiary-fixed-variant: #544600;
+  --color-surface: #f7faf8;
+  --color-surface-dim: #d8ddd9;
+  --color-surface-bright: #f7faf8;
+  --color-surface-container-lowest: #fbfefc;
+  --color-surface-container-low: #f1f5f2;
+  --color-surface-container: #ebefec;
+  --color-surface-container-high: #e5e9e6;
+  --color-surface-container-highest: #dfe3e0;
+  --color-surface-variant: #dfe3e0;
+  --color-surface-tint: #006e23;
+  --color-on-surface: #141f17;
+  --color-on-surface-variant: #3a4a3d;
+  --color-on-background: #141f17;
+  --color-background: #f7faf8;
+  --color-inverse-surface: #252f28;
+  --color-inverse-on-surface: #edf2ee;
+  --color-outline: #637a68;
+  --color-outline-variant: #b4c9b8;
+  --color-error: #ba1a1a;
+  --color-error-container: #ffdad6;
+  --color-on-error: #ffffff;
+  --color-on-error-container: #93000a;
+  /* shifted from emerald-600 (#059669, contrast ~3.7:1 on white) to emerald-700
+     so success text + ticker arrows pass WCAG AA on light backgrounds. */
+  --color-success: #047857;
+  --color-danger: #b91c1c;
+  /* amber-700 — passes 4.5:1 on white. used for "unverified" badges on
+     mt-pelerin volume rows (frontend-event-only, not webhook-confirmed),
+     legal-page language banner, and admin "Unverified" total. */
+  --color-warning: #b45309;
+  --color-warning-container: #fef3c7;
+  --color-on-warning: #ffffff;
+  --color-on-warning-container: #78350f;
+  /* font system:
+     - Switzer (Indian Type Foundry, free OFL) — display + body. distinctive
+       geometric grotesque with more personality than DM Sans without being
+       eccentric. less common than Inter/Geist so it doesn't read as
+       "generic vercel template".
+     - JetBrains Mono — numeric content (prices, fees, wallet addresses,
+       tx hashes). gives a "trading desk" feel that suits crypto/fintech
+       and immediately distinguishes data from prose. */
+  --font-family-headline: "Switzer", system-ui, -apple-system, sans-serif;
+  --font-family-body: "Switzer", system-ui, -apple-system, sans-serif;
+  --font-family-label: "Switzer", system-ui, -apple-system, sans-serif;
+  --font-family-display: "Switzer", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", "Cascadia Mono", Menlo, monospace;
+  /* graduated radius scale. larger surfaces use larger radii to feel
+     proportionate. older code used DEFAULT/lg/xl interchangeably (all 12px),
+     so xl is kept at 12px for backwards compatibility — new code should
+     prefer the explicit size tokens. */
+  --radius-sm: 0.25rem;        /* 4px  — chips, badges, tiny pills */
+  --radius-md: 0.5rem;         /* 8px  — buttons, inputs, dropdown items */
+  --radius-lg: 0.75rem;        /* 12px — cards (default) */
+  --radius-xl: 0.75rem;        /* 12px — kept for backcompat; prefer rounded-lg */
+  --radius-2xl: 1.25rem;       /* 20px — modals, hero panels */
+  --radius-3xl: 1.75rem;       /* 28px — large hero surfaces */
+  --radius-DEFAULT: var(--radius-lg);
+  --radius-full: 9999px;
+}
+
+* {
+  font-family: "Switzer", system-ui, -apple-system, sans-serif;
+}
+
+body {
+  background-color: var(--color-surface);
+  color: var(--color-on-surface);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* ── Dark mode (neutral cool — Linear/Vercel style) ──
+ * Accent (emerald) kept vivid; surfaces kept neutral so the
+ * accent *reads* instead of blending into a green tint.
+ */
+.dark body,
+.dark {
+  --color-primary: #10b981;           /* emerald-500 — pops on neutral */
+  --color-primary-container: #065f46; /* emerald-800 for soft-emerald fills */
+  --color-on-primary: #ecfdf5;
+  --color-on-primary-container: #a7f3d0;
+
+  --color-surface: #0a0a0b;            /* near-black, cool bias */
+  --color-surface-dim: #08080a;
+  --color-surface-bright: #17171a;
+  --color-surface-container-lowest: #111113;
+  --color-surface-container-low: #161619;
+  --color-surface-container: #1a1a1d;
+  --color-surface-container-high: #222226;
+  --color-surface-container-highest: #2a2a2f;
+  --color-surface-variant: #27272a;
+  --color-inverse-surface: #f4f4f5;
+  --color-inverse-on-surface: #0a0a0b;
+
+  --color-on-surface: #f4f4f5;         /* zinc-100 */
+  --color-on-surface-variant: #d4d4d8; /* zinc-300 */
+  --color-on-background: #f4f4f5;
+  --color-background: #0a0a0b;
+
+  --color-secondary: #a1a1aa;          /* zinc-400 */
+  --color-outline: #52525b;            /* zinc-600 */
+  --color-outline-variant: #3f3f46;    /* zinc-700 */
+
+  --color-error: #f87171;
+  --color-error-container: #450a0a;
+  --color-on-error-container: #fecaca;
+
+  /* warning in dark: amber-400 — readable on dark surfaces (~9:1) */
+  --color-warning: #fbbf24;
+  --color-warning-container: #451a03;
+  --color-on-warning-container: #fde68a;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-surface);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-surface-container-highest);
+  border-radius: 10px;
+}
+
+/* Accessibility: visible focus ring */
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Accessibility: respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Number input spinner removal */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+}

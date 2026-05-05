@@ -1,0 +1,220 @@
+{
+  "privacyDisclosure": {
+    "aria": "Privacy disclosure",
+    "title": "Your privacy",
+    "body": "We don't run analytics or advertising trackers. Your wallet address, theme, and recent activity are stored locally in this browser only.",
+    "readMore": "Read the policy",
+    "cta": "Got it",
+    "dismiss": "Dismiss"
+  },
+  "common": {
+    "loading": "Loading…",
+    "back": "Back",
+    "close": "Close",
+    "open": "Open",
+    "continue": "Continue",
+    "cancel": "Cancel",
+    "providerName": "Provider",
+    "switchToLight": "Switch to light mode",
+    "switchToDark": "Switch to dark mode",
+    "toggleMenu": "Toggle menu"
+  },
+  "header": {
+    "subtitle": "aggregator",
+    "openApp": "Open"
+  },
+  "footer": {
+    "tagline": "© {{year}} OnRamp. Aggregator interface — providers handle custody and KYC.",
+    "privacyPolicy": "Privacy Policy",
+    "termsOfService": "Terms of Service"
+  },
+  "language": {
+    "label": "Language",
+    "en": "English",
+    "es": "Español",
+    "fr": "Français",
+    "de": "Deutsch"
+  },
+  "landing": {
+    "trustBadge": "Trusted by 1M+ users worldwide",
+    "titlePart1": "The simplest way to ",
+    "titlePart2": "buy crypto.",
+    "subtitle": "Skip the signup. Compare top on-ramp providers in one place and get the industry's lowest fees with lightning-fast delivery directly to your wallet.",
+    "buyNow": "Buy Now",
+    "viewHistory": "View History",
+    "chips": {
+      "nonCustodial": "Non-Custodial",
+      "noSignup": "No Signup",
+      "instantDelivery": "Instant Delivery"
+    },
+    "features": {
+      "heading": "Engineered for simplicity.",
+      "subheading": "We've removed the barriers to entry, making it easier than ever to enter the world of decentralized finance.",
+      "noSignup": {
+        "title": "No Signup",
+        "desc": "Skip the account creation. Buy crypto in seconds — identity verification is handled securely by our trusted provider partners only when needed."
+      },
+      "bestRates": {
+        "title": "Best Market Rates",
+        "desc": "Our smart-routing engine aggregates liquidity from top exchanges to ensure you always get the most for your money."
+      },
+      "instant": {
+        "title": "Instant Delivery",
+        "desc": "No waiting periods. Once payment is confirmed, your digital assets are dispatched immediately to your private wallet."
+      }
+    },
+    "howItWorks": "How it works"
+  },
+  "quickPurchase": {
+    "title": "Quick Purchase",
+    "openFull": "Open full swap interface",
+    "youPay": "You Pay",
+    "youReceive": "You Receive",
+    "rate": "Rate",
+    "fee": "Fee",
+    "feeValue": "{{value}} (Promo)",
+    "continue": "Continue",
+    "swapToSell": "Switch to sell flow",
+    "exampleHint": "Example"
+  },
+  "swap": {
+    "tabs": {
+      "buy": "Buy",
+      "sell": "Sell"
+    },
+    "labels": {
+      "youPay": "You Pay",
+      "youSend": "You Send",
+      "youReceive": "You Receive",
+      "youGet": "You Get",
+      "bestRate": "Best Rate",
+      "inUsd": "in USD",
+      "onNetwork": "on {{network}}",
+      "walletAddress": "Wallet Address",
+      "payoutAddress": "Payout Address",
+      "paymentMethod": "Payment Method",
+      "payoutMethod": "Payout Method",
+      "estimated": "Estimated"
+    },
+    "placeholders": {
+      "amount": "0.00",
+      "walletAddress": "Enter wallet address",
+      "payoutAddress": "Enter bank or payout address"
+    },
+    "errors": {
+      "walletRequired": "Please provide a valid {{network}} address to continue",
+      "payoutRequired": "Enter where to receive your funds"
+    },
+    "providersHint": "We'll compare {{count}} providers for you on the next step",
+    "cta": {
+      "continue": "Continue — compare providers",
+      "needAmountAndPayout": "Enter amount and payout address",
+      "needWallet": "Enter a wallet address to continue"
+    },
+    "footer": {
+      "disclaimer": "Fees and processing times vary by provider. Identity verification is handled by the provider you pick. By continuing, you agree to our",
+      "andTo": "and",
+      "transactionsFinal": "All transactions are final.",
+      "demoMode": "Demo mode — no live payment is processed"
+    },
+    "swapToBuy": "Switch to buy",
+    "swapToSell": "Switch to sell"
+  },
+  "compare": {
+    "heading": "Compare {{symbol}} providers",
+    "footnote": "Pick a provider to continue. Final pricing, fees, and identity verification are confirmed inside the provider's secure flow.",
+    "card": {
+      "fetching": "Fetching live quote…",
+      "unavailable": "Quote not available — open widget for live pricing",
+      "feeLabel": "Fee:",
+      "unverifiedBadge": "unverified",
+      "unverifiedTitle": "Status not webhook-verified for this provider"
+    },
+    "badges": {
+      "bestRate": "Best Rate",
+      "lowestFee": "Lowest Fee"
+    },
+    "ariaLabel": {
+      "loading": "Pick {{name}} — fetching quote",
+      "ok": "Pick {{name}} — receive {{amount}} {{symbol}}, fee {{fiatSymbol}}{{fee}} {{fiatCode}}{{badgeSuffix}}{{unverifiedSuffix}}",
+      "unavailable": "Pick {{name}} — quote unavailable, open widget for live pricing",
+      "badgeSuffix": ", {{badge}}",
+      "unverifiedSuffix": ", status not webhook-verified"
+    }
+  },
+  "modal": {
+    "securePayment": "{{provider}} — Secure Payment",
+    "poweredBy": "Powered by {{provider}} — 256-bit encrypted",
+    "closeAria": "Close {{provider}} payment",
+    "iframeTitle": "{{provider}} Payment widget"
+  },
+  "skipLink": {
+    "main": "Skip to content",
+    "admin": "Skip to dashboard"
+  },
+  "legal": {
+    "noticeNotInLanguage": "This page is only available in English. Please consult an English-speaking advisor if you need clarification."
+  },
+  "notFound": {
+    "title": "We can't find that page",
+    "subtitle": "The link might be broken or the page may have moved. Let's get you back home.",
+    "backHome": "Back home"
+  },
+  "history": {
+    "localStorageNotice": "Your last-used wallet address is remembered in this browser so we can show your history without an account. Clear browser data or switch device to reset.",
+    "title": "Transaction History",
+    "count_one": "{{count}} transaction",
+    "count_other": "{{count}} transactions",
+    "demoBadge": "Demo data",
+    "errorBadge": "Couldn't load — try again",
+    "loading": "Loading your transactions…",
+    "emptyAllTitle": "No transactions yet",
+    "emptyFilteredTitle": "No {{filter}} transactions yet",
+    "emptyAllDesc": "When you buy or sell crypto through the app, your transactions will show up here.",
+    "emptyFilteredDesc": "Switch to \"All\" to see every transaction, or start a {{filter}} order.",
+    "emptyCta": "Buy crypto",
+    "filters": {
+      "all": "All",
+      "buy": "Buy",
+      "sell": "Sell"
+    },
+    "status": {
+      "completed": "Completed",
+      "pending": "Pending",
+      "failed": "Failed",
+      "detail": {
+        "awaitingPayment": "Awaiting your payment",
+        "paymentMarked": "Payment confirmation pending",
+        "processing": "Provider processing",
+        "paymentSubmittedUnverified": "Payment submitted (unverified)",
+        "createdUnverified": "Order created (unverified)",
+        "completed": "Completed",
+        "failed": "Failed",
+        "cancelled": "Cancelled",
+        "expired": "Expired",
+        "refunded": "Refunded",
+        "unknown": "Status unknown"
+      }
+    },
+    "live": {
+      "checking": "Checking…",
+      "lastUpdated": "Updated {{age}} ago",
+      "refresh": "Refresh now"
+    },
+    "unverified": {
+      "label": "Unverified",
+      "tooltip": "This order's status comes from the provider's web widget rather than a signed webhook. Treat as best-effort until you confirm the transaction on-chain."
+    },
+    "type": {
+      "buy": "BUY",
+      "sell": "SELL"
+    },
+    "detail": {
+      "status": "Status",
+      "wallet": "Wallet",
+      "provider": "Provider",
+      "network": "Network",
+      "txHash": "Tx Hash"
+    }
+  }
+}
