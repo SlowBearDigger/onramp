@@ -52,11 +52,15 @@ export default function BottomNav() {
       className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-surface-container-lowest/95 dark:bg-surface-container-lowest/95 backdrop-blur border-t border-outline-variant/10 dark:border-white/5"
       style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
     >
-      <div className="flex items-center px-1 py-2">
+      {/* layout: 3 primary tabs (icon + label) on the left, then a thin
+          divider, then 2 utility buttons (icon-only) on the right. tabs
+          flex-1 to fill available width; utilities are fixed-width so the
+          bar stays balanced even when a label like "History" wraps in
+          another locale. */}
+      <div className="flex items-stretch px-2 py-1.5">
         {tabs.map((tab) => {
           const active = isActive(tab.to)
           const TabIcon = tab.Icon
-          // shortLabel on small screens (history is verbose in some locales).
           const label = tab.shortLabel || tab.label
           return (
             <Link key={tab.to} to={tab.to} className="flex-1 min-w-0" aria-current={active ? 'page' : undefined}>
@@ -64,7 +68,7 @@ export default function BottomNav() {
                 {active && (
                   <span
                     aria-hidden="true"
-                    className="absolute -top-2 w-8 h-1 rounded-full bg-primary"
+                    className="absolute -top-1.5 w-7 h-0.5 rounded-full bg-primary"
                   />
                 )}
                 <span className={`inline-flex ${active ? 'text-primary' : 'text-secondary'}`}>
@@ -78,19 +82,29 @@ export default function BottomNav() {
           )
         })}
 
-        {/* utilities — language + theme. icon-only to fit the bar. */}
+        {/* divider — visually separates primary nav from utility actions.
+            very subtle; just a 1px line with opacity. */}
+        <div aria-hidden="true" className="self-center mx-1 h-7 w-px bg-outline-variant/20 dark:bg-white/10" />
+
+        {/* utilities — icon-only. compact (40px each) so the 3 tabs keep
+            most of the bar real estate. tap target is still 44px+ thanks
+            to the py-3 padding. */}
         <div ref={langWrapRef} className="relative shrink-0">
           <button
             onClick={() => setLangOpen((v) => !v)}
             aria-haspopup="listbox"
             aria-expanded={langOpen}
-            aria-label={t('language.label')}
-            className="flex flex-col items-center gap-0.5 py-1.5 px-2 rounded-xl"
+            aria-label={`${t('language.label')} (${currentLang.code.toUpperCase()})`}
+            className="relative flex items-center justify-center w-10 h-12 rounded-xl"
           >
-            <span className="text-secondary inline-flex">
-              <Globe size={22} weight="bold" />
-            </span>
-            <span className="text-[10px] font-semibold uppercase tracking-wider font-mono text-secondary">
+            <Globe size={22} weight="bold" className="text-secondary" />
+            {/* iso code as a tiny chip on the icon corner — much more
+                compact than a stacked label, and identifies the active
+                language at a glance. */}
+            <span
+              aria-hidden="true"
+              className="absolute -bottom-0.5 -right-0.5 text-[9px] font-bold uppercase tracking-wider font-mono text-primary bg-surface-container-lowest dark:bg-surface-container px-1 rounded leading-tight"
+            >
               {currentLang.code}
             </span>
           </button>
@@ -129,15 +143,12 @@ export default function BottomNav() {
 
         <button
           onClick={toggle}
-          className="flex flex-col items-center gap-0.5 py-1.5 px-2 shrink-0 rounded-xl"
+          className="flex items-center justify-center w-10 h-12 rounded-xl shrink-0"
           aria-label={dark ? t('common.switchToLight') : t('common.switchToDark')}
         >
-          <span className="text-secondary inline-flex">
-            {dark ? <Sun size={22} weight="bold" /> : <Moon size={22} weight="bold" />}
-          </span>
-          <span className="text-[10px] font-semibold uppercase tracking-wider text-secondary">
-            {dark ? 'Light' : 'Dark'}
-          </span>
+          {dark
+            ? <Sun size={22} weight="bold" className="text-secondary" />
+            : <Moon size={22} weight="bold" className="text-secondary" />}
         </button>
       </div>
     </nav>
