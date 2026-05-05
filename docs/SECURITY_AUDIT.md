@@ -204,7 +204,23 @@ We don't track JWT `jti` (JWT ID) for webhooks. A captured Transak webhook JWT c
 
 `npm audit` not currently part of CI. **Production fix:** GitHub Dependabot is free for public repos; or `npm audit --audit-level=high` as a CI gate. The current snapshot was clean as of audit date.
 
-### R10 — Admin session stateless
+### R10 — Rate limits are per-instance, not global
+
+`express-rate-limit` uses an in-memory store by default. Verified on the
+deployed Render instance: consecutive POST calls to `/api/providers/transak/widget-url`
+showed `ratelimit-remaining` decrementing 6→5→4→3 then **jumping back to 5**,
+confirming multiple workers handle the requests, each with its own counter.
+Effective limit ≈ `configured_max × workers` (currently observed ~2-3 workers
+on Render free, so ~20-30 req/min effective on a 10/min limiter).
+
+Acceptable for staging (it's still a meaningful brake, just not the absolute
+number written in the config). **Production fix:** swap the default memory
+store for a shared backend — Redis (Upstash has a free tier; or run Redis
+on the same Render service for $0), or even use the existing SQLite as a
+poor-man's store via [`@acpr/rate-limit-postgresql`-style adapter pattern].
+Once swapped, the limit is global across workers/restarts.
+
+### R11 — Admin session stateless
 
 The admin JWT can't be revoked individually — only the global `ADMIN_JWT_SECRET` rotation invalidates everything. Acceptable for single-admin staging; for multi-admin production, add a `revoked_jwts` table or migrate to opaque session tokens stored server-side.
 
