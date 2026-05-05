@@ -4,17 +4,11 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <!-- Content Security Policy.
-         GitHub Pages does not let us set CSP via headers, so we ship it
-         via meta. allowed sources:
-         - self, blob/data for images + fonts
-         - fontshare + google fonts CDNs (loaded by index.html non-blocking)
-         - coingecko (live ticker fetch)
-         - the deployed backend on Render (api + push + webhook URLs)
-         - provider iframes (transak / mtpelerin / topper) for the widget
-         - 'unsafe-inline' for styles is required by Tailwind 4 (it injects
-           a single <style> tag at runtime). 'unsafe-inline' is NOT allowed
-           for scripts — XSS payloads land neutered.
-    -->
+         GitHub Pages doesn't let us set CSP via headers, so we ship it
+         via meta. directives like frame-ancestors and X-Frame-Options
+         are ignored in meta (browser-spec) — those would need a real
+         header (move to Cloudflare Pages or a CDN front to enable).
+         meta CSP is enforced for everything else. -->
     <meta http-equiv="Content-Security-Policy" content="
       default-src 'self';
       script-src 'self';
@@ -28,7 +22,6 @@
       object-src 'none';
       base-uri 'self';
       form-action 'self';
-      frame-ancestors 'none';
       upgrade-insecure-requests;
     " />
     <title>On-Ramp | Premium Crypto Gateway</title>
@@ -47,22 +40,13 @@
     <link rel="preconnect" href="https://cdn.fontshare.com" crossorigin />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <!-- non-blocking font load: media="print" defers parse, onload swaps to "all".
-         the noscript fallback keeps things working when JS is disabled.
+    <!-- fonts are loaded via JS in src/main.jsx (non-blocking, CSP-clean).
+         the previous `media="print" onload="..."` trick used inline event
+         handlers which violate `script-src 'self'`. JS injection at startup
+         keeps the same non-blocking behavior without inline handlers.
          - Switzer (display + body) from fontshare CDN — free OFL.
-         - JetBrains Mono (numeric / addresses) from google fonts — free OFL. -->
-    <link
-      rel="stylesheet"
-      href="https://api.fontshare.com/v2/css?f[]=switzer@400,500,600,700,800&display=swap"
-      media="print"
-      onload="this.media='all'"
-    />
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap"
-      media="print"
-      onload="this.media='all'"
-    />
+         - JetBrains Mono (numeric / addresses) from google fonts — free OFL.
+         noscript fallback below covers the no-JS case. -->
     <noscript>
       <link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=switzer@400,500,600,700,800&display=swap" />
       <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" />
