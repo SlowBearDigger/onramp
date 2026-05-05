@@ -55,9 +55,16 @@ free tiers that cover either.
 
    | Key | Value |
    |---|---|
-   | `TRANSAK_API_KEY` | your Transak API key |
-   | `TRANSAK_PARTNER_ACCESS_TOKEN` | your Transak partner access token |
+   | `TRANSAK_API_KEY` | your Transak API Key (public) |
+   | `TRANSAK_API_SECRET` | your Transak API Secret (server-side only) |
    | `TRANSAK_REFERRER_DOMAIN` | `https://<user>.github.io` (no path, no trailing slash) |
+
+   **Note on tokens:** Transak's partner access token is a 7-day JWT,
+   not the API Secret. Set `TRANSAK_API_SECRET` and the backend will
+   auto-mint + cache the access token via their refresh-token endpoint.
+   If you only have a pre-generated 7-day token (e.g. emergency rotation),
+   set `TRANSAK_PARTNER_ACCESS_TOKEN` instead — but you'll need to
+   regenerate it weekly.
    | `CORS_ORIGIN` | `https://<user>.github.io` |
    | `ADMIN_USERNAME` | `admin` (or whatever you want) |
    | `ADMIN_PASSWORD_HASH` | output of `node backend/bin/hash-admin-password.js` |

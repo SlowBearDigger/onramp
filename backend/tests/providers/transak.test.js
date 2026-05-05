@@ -83,10 +83,11 @@ describe('transak.verifyOrderWebhook', () => {
     await expect(verifyOrderWebhook({ data: jwt })).rejects.toThrow(/missing eventID/)
   })
 
-  it('rejects when partner access token is missing and insecure flag is off', async () => {
+  it('rejects when no signing secret is configured (and insecure flag is off)', async () => {
     delete process.env.TRANSAK_PARTNER_ACCESS_TOKEN
+    delete process.env.TRANSAK_API_SECRET
     const jwt = await signWebhookData({ eventID: 'ORDER_COMPLETED' })
-    await expect(verifyOrderWebhook({ data: jwt })).rejects.toThrow(/not configured/)
+    await expect(verifyOrderWebhook({ data: jwt })).rejects.toThrow(/no signing secret/)
   })
 
   it('rejects an alg=none ("alg confusion") attack — pinned to HS256', async () => {

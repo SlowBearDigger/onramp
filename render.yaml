@@ -54,6 +54,12 @@ services:
       # secrets — set in the Render UI after the service is created.
       - key: TRANSAK_API_KEY
         sync: false
+      # preferred: long-lived api-secret. backend auto-mints + caches the
+      # 7-day access token. set this and forget rotation.
+      - key: TRANSAK_API_SECRET
+        sync: false
+      # legacy/emergency override. only set if you don't have the secret.
+      # expires every 7 days; manual rotation required.
       - key: TRANSAK_PARTNER_ACCESS_TOKEN
         sync: false
       - key: TRANSAK_REFERRER_DOMAIN

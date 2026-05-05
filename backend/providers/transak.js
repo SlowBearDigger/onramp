@@ -1,4 +1,5 @@
 import { jwtVerify, decodeJwt } from 'jose'
+import { getValidAccessToken } from './transak-token.js'
 
 // Map Transak webhook eventIDs → canonical status strings we store.
 // Reference (verified against docs.transak.com/features/webhooks): the same
@@ -62,11 +63,27 @@ export async function verifyOrderWebhook(body) {
     throw new Error('webhook: body.data is not a JWT string')
   }
 
-  const secret = process.env.TRANSAK_PARTNER_ACCESS_TOKEN
+  // signing-secret resolution. transak's webhooks are signed with the
+  // partner access token (per docs.transak.com/guides/how-to-decrypt-
+  // webhook-payload). resolution order:
+  //   1. explicit TRANSAK_PARTNER_ACCESS_TOKEN  — manual override
+  //   2. TRANSAK_API_SECRET (via auto-refresh)  — preferred
+  //   3. nothing                                 — only allowed when
+  //      TRANSAK_WEBHOOK_INSECURE=true (dev only; throws at boot in prod
+  //      via assertWebhookConfigSafe)
   const allowUnverified = process.env.TRANSAK_WEBHOOK_INSECURE === 'true'
 
+  let secret = process.env.TRANSAK_PARTNER_ACCESS_TOKEN
+  if (!secret && process.env.TRANSAK_API_SECRET) {
+    try {
+      secret = await getValidAccessToken()
+    } catch {
+      // fall through; treat as unconfigured below
+    }
+  }
+
   if (!secret && !allowUnverified) {
-    throw new Error('webhook: TRANSAK_PARTNER_ACCESS_TOKEN not configured')
+    throw new Error('webhook: no signing secret available — set TRANSAK_API_SECRET (preferred) or TRANSAK_PARTNER_ACCESS_TOKEN')
   }
 
   let payload
@@ -158,25 +175,36 @@ function transakApiBase() {
 }
 
 // throws on missing config so callers can map to a clean 503.
+//
+// auth model has two acceptable shapes:
+//   1. preferred: TRANSAK_API_KEY + TRANSAK_API_SECRET — backend mints
+//      and refreshes the 7-day access token automatically.
+//   2. legacy/emergency: TRANSAK_API_KEY + TRANSAK_PARTNER_ACCESS_TOKEN
+//      — operator pasted a token they generated externally; no
+//      auto-refresh, expires in 7 days.
+// either path satisfies the config gate.
 function assertWidgetUrlConfig() {
   const apiKey = process.env.TRANSAK_API_KEY
-  const accessToken = process.env.TRANSAK_PARTNER_ACCESS_TOKEN
+  const apiSecret = process.env.TRANSAK_API_SECRET
+  const overrideToken = process.env.TRANSAK_PARTNER_ACCESS_TOKEN
   const referrerDomain = process.env.TRANSAK_REFERRER_DOMAIN
-  if (!apiKey || !accessToken || !referrerDomain) {
+  const hasAuth = apiSecret || overrideToken
+  if (!apiKey || !hasAuth || !referrerDomain) {
     const err = new Error(
       'transak signed-url not fully configured: TRANSAK_API_KEY, ' +
-      'TRANSAK_PARTNER_ACCESS_TOKEN, and TRANSAK_REFERRER_DOMAIN are required.'
+      '(TRANSAK_API_SECRET or TRANSAK_PARTNER_ACCESS_TOKEN), and ' +
+      'TRANSAK_REFERRER_DOMAIN are required.'
     )
     err.code = 'not_configured'
     throw err
   }
-  return { apiKey, accessToken, referrerDomain }
+  return { apiKey, referrerDomain }
 }
 
 export function isWidgetUrlConfigured() {
   return Boolean(
     process.env.TRANSAK_API_KEY &&
-    process.env.TRANSAK_PARTNER_ACCESS_TOKEN &&
+    (process.env.TRANSAK_API_SECRET || process.env.TRANSAK_PARTNER_ACCESS_TOKEN) &&
     process.env.TRANSAK_REFERRER_DOMAIN
   )
 }
@@ -238,47 +266,72 @@ function buildWidgetParams({ apiKey, referrerDomain, session }) {
 // `session` follows our canonical shape (mode, cryptoCurrency, fiatCurrency,
 // fiatAmount, walletAddress, cryptoNetwork, partnerOrderId, ...).
 // returns `{ widgetUrl, expiresAt }`.
+//
+// access-token resolution:
+//   - if TRANSAK_PARTNER_ACCESS_TOKEN is set → use verbatim (override path)
+//   - else → mint via /partners/api/v2/refresh-token using TRANSAK_API_SECRET,
+//     cached for 7 days minus a 1h safety margin (see transak-token.js).
+//
+// retry semantics: if the cached token is expired/rejected, transak returns
+// 401. we catch that, force-refresh once, and retry — covers the edge case
+// where transak rotated the token early or our cached expiry was off.
 export async function createSignedWidgetUrl(session) {
-  const { apiKey, accessToken, referrerDomain } = assertWidgetUrlConfig()
+  const { apiKey, referrerDomain } = assertWidgetUrlConfig()
   const url = `${transakApiBase()}/api/v2/auth/session`
 
   const body = {
     widgetParams: buildWidgetParams({ apiKey, referrerDomain, session }),
   }
 
-  const ac = new AbortController()
-  const timer = setTimeout(() => ac.abort(), 5000)
-  try {
-    const r = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'access-token': accessToken,
-        'content-type': 'application/json',
-        accept: 'application/json',
-      },
-      body: JSON.stringify(body),
-      signal: ac.signal,
-      redirect: 'error',
-    })
-    if (!r.ok) {
-      const detail = await r.text().catch(() => '')
-      const err = new Error(`transak session HTTP ${r.status}: ${detail.slice(0, 200)}`)
-      err.code = r.status === 401 ? 'auth_failed' : 'upstream_error'
-      err.status = r.status
-      throw err
+  const callOnce = async (token) => {
+    const ac = new AbortController()
+    const timer = setTimeout(() => ac.abort(), 5000)
+    try {
+      const r = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'access-token': token,
+          'content-type': 'application/json',
+          accept: 'application/json',
+        },
+        body: JSON.stringify(body),
+        signal: ac.signal,
+        redirect: 'error',
+      })
+      return r
+    } finally {
+      clearTimeout(timer)
     }
-    const data = await r.json()
-    const widgetUrl = data?.data?.widgetUrl
-    if (typeof widgetUrl !== 'string' || !widgetUrl.startsWith('https://')) {
-      const err = new Error('transak session returned no widgetUrl')
-      err.code = 'invalid_response'
-      throw err
-    }
-    // single-use, 5-minute TTL per docs. surface that to the caller so the
-    // frontend doesn't cache it.
-    const expiresAt = Math.floor(Date.now() / 1000) + 5 * 60
-    return { widgetUrl, expiresAt }
-  } finally {
-    clearTimeout(timer)
   }
+
+  let accessToken = await getValidAccessToken()
+  let r = await callOnce(accessToken)
+
+  // retry on 401 only when we minted the token ourselves (no override env).
+  // override tokens are user-provided; failing on those should surface
+  // immediately instead of silently re-minting (which may not be possible
+  // if api-secret isn't set).
+  if (r.status === 401 && !process.env.TRANSAK_PARTNER_ACCESS_TOKEN) {
+    const { _resetCacheForTests } = await import('./transak-token.js')
+    _resetCacheForTests()
+    accessToken = await getValidAccessToken()
+    r = await callOnce(accessToken)
+  }
+
+  if (!r.ok) {
+    const detail = await r.text().catch(() => '')
+    const err = new Error(`transak session HTTP ${r.status}: ${detail.slice(0, 200)}`)
+    err.code = r.status === 401 ? 'auth_failed' : 'upstream_error'
+    err.status = r.status
+    throw err
+  }
+  const data = await r.json()
+  const widgetUrl = data?.data?.widgetUrl
+  if (typeof widgetUrl !== 'string' || !widgetUrl.startsWith('https://')) {
+    const err = new Error('transak session returned no widgetUrl')
+    err.code = 'invalid_response'
+    throw err
+  }
+  const expiresAt = Math.floor(Date.now() / 1000) + 5 * 60
+  return { widgetUrl, expiresAt }
 }
