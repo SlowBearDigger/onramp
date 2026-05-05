@@ -48,6 +48,14 @@ import {
   ipFromRequest,
   userAgentFromRequest,
 } from './admin/audit.js'
+import {
+  isPushEnabled,
+  assertPushConfigSafe,
+  getPublicKey as getPushPublicKey,
+  saveSubscription as savePushSubscription,
+  deleteSubscription as deletePushSubscription,
+  sendOrderPush,
+} from './push.js'
 
 const PORT = Number(process.env.PORT || 3001)
 const TRANSAK_ENV = process.env.TRANSAK_ENV || 'STAGING'
@@ -67,6 +75,7 @@ const CORS_ORIGIN = (process.env.CORS_ORIGIN || 'http://localhost:5173')
 assertTransakConfigSafe()
 assertTopperConfigSafe()
 assertAdminConfigSafe()
+assertPushConfigSafe()
 
 // input-shape validators (tight by design — these are public endpoints).
 //
@@ -316,6 +325,9 @@ app.post('/webhook/transak/order', webhookLimiter, async (req, res) => {
       return res.status(200).json({ ok: true, ignored: 'no-order-id' })
     }
     upsertOrder(row)
+    // best-effort web push notification. never throws — sendOrderPush
+    // swallows its own errors so webhook ack never depends on push success.
+    sendOrderPush(row).catch(() => { /* logged inside */ })
     res.json({ ok: true, orderId: row.id, status: row.status })
   } catch (err) {
     console.error('[transak webhook] verify failed:', err?.message)
@@ -598,6 +610,51 @@ app.get('/api/admin/export.csv', apiLimiter, requireAdmin, (req, res) => {
   res.setHeader('content-type', 'text/csv; charset=utf-8')
   res.setHeader('content-disposition', `attachment; filename="onramp-${fromIso}_to_${toIso}.csv"`)
   res.send(csv)
+})
+
+// web push — public endpoints (no auth; subscriptions are tied to a
+// wallet address, which is semi-public).
+app.get('/api/push/vapid-public-key', apiLimiter, (req, res) => {
+  if (!isPushEnabled()) return res.status(503).json({ error: 'push_not_configured' })
+  res.json({ publicKey: getPushPublicKey() })
+})
+
+app.post('/api/push/subscribe', apiLimiter, (req, res) => {
+  if (!isPushEnabled()) return res.status(503).json({ error: 'push_not_configured' })
+  const body = req.body || {}
+  if (typeof body.customerId !== 'string' || !CUSTOMER_ID_RE.test(body.customerId)) {
+    return res.status(400).json({ error: 'invalid_customerId' })
+  }
+  if (!body.subscription || typeof body.subscription.endpoint !== 'string' ||
+      !body.subscription.keys?.p256dh || !body.subscription.keys?.auth) {
+    return res.status(400).json({ error: 'invalid_subscription' })
+  }
+  if (typeof body.subscription.endpoint !== 'string' ||
+      !/^https:\/\//.test(body.subscription.endpoint) ||
+      body.subscription.endpoint.length > 1024) {
+    return res.status(400).json({ error: 'invalid_endpoint' })
+  }
+  try {
+    savePushSubscription({
+      customerId: body.customerId,
+      endpoint: body.subscription.endpoint,
+      keys: body.subscription.keys,
+      userAgent: userAgentFromRequest(req),
+    })
+    res.json({ ok: true })
+  } catch (err) {
+    console.error('[push subscribe] failed:', err?.message)
+    res.status(500).json({ error: 'subscribe_failed' })
+  }
+})
+
+app.post('/api/push/unsubscribe', apiLimiter, (req, res) => {
+  const endpoint = req.body?.endpoint
+  if (typeof endpoint !== 'string' || !/^https:\/\//.test(endpoint)) {
+    return res.status(400).json({ error: 'invalid_endpoint' })
+  }
+  const removed = deletePushSubscription(endpoint)
+  res.json({ ok: true, removed })
 })
 
 // recent admin activity. read-only listing of the audit table for the

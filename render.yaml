@@ -72,3 +72,11 @@ services:
         sync: false
       - key: ADMIN_JWT_SECRET
         sync: false
+      # web push — set BOTH or NEITHER. generate keys with:
+      #   node -e "console.log(require('web-push').generateVAPIDKeys())"
+      - key: VAPID_PUBLIC_KEY
+        sync: false
+      - key: VAPID_PRIVATE_KEY
+        sync: false
+      - key: VAPID_CONTACT
+        sync: false

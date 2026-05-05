@@ -2,11 +2,12 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from 'motion/react'
-import { ClockCounterClockwise, CircleNotch, Info, ArrowSquareOut, ShieldWarning } from '@phosphor-icons/react'
+import { ClockCounterClockwise, CircleNotch, Info, ArrowSquareOut, ShieldWarning, Bell, BellSlash } from '@phosphor-icons/react'
 import { BlurIn, Stagger, StaggerItem, HoverCard, MagneticButton } from './Motion'
 import { CryptoIcon } from '../config/cryptos'
 import { formatDate } from '../data/mockData'
-import { useOrders } from '../hooks/useOrders'
+import { useOrders, readLastWallet } from '../hooks/useOrders'
+import { usePushNotifications } from '../hooks/usePushNotifications'
 import { explorerUrlFor, shortHash } from '../utils/explorer'
 
 // filters use stable internal ids; the visible label comes from i18n.
@@ -43,6 +44,8 @@ export default function HistoryView() {
   const [expandedId, setExpandedId] = useState(null)
   const { orders, state, lastFetchedAt, isPolling, refresh } = useOrders()
   const age = useRelativeAge(lastFetchedAt)
+  const wallet = readLastWallet()
+  const push = usePushNotifications({ customerId: wallet })
 
   const filtered = filter === 'all'
     ? orders
@@ -86,6 +89,39 @@ export default function HistoryView() {
             {isMockData && <span className="ml-2 text-[10px] uppercase tracking-wider font-bold text-tertiary">· {t('history.demoBadge')}</span>}
             {isError && <span className="ml-2 text-[10px] uppercase tracking-wider font-bold text-error">· {t('history.errorBadge')}</span>}
           </p>
+
+          {/* push notifications opt-in. shown when supported + not yet
+              subscribed; tells the user that we'll ping them when the
+              order status changes (works even if the app is closed).
+              hidden when not supported (browsers without PushManager) or
+              already subscribed (then we show a discreet "active" badge). */}
+          {push.state === 'unsubscribed' && wallet && (
+            <button
+              type="button"
+              onClick={push.subscribe}
+              className="mt-3 inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/10 text-primary text-xs font-bold hover:bg-primary/15 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+            >
+              <Bell size={14} weight="bold" aria-hidden="true" />
+              {t('push.enable', { defaultValue: 'Enable order notifications' })}
+            </button>
+          )}
+          {push.state === 'subscribed' && (
+            <button
+              type="button"
+              onClick={push.unsubscribe}
+              className="mt-3 inline-flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-bold text-secondary hover:text-on-surface transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded"
+              title={t('push.disableTooltip', { defaultValue: 'Click to disable' })}
+            >
+              <Bell size={11} weight="bold" aria-hidden="true" />
+              {t('push.active', { defaultValue: 'Notifications on' })}
+            </button>
+          )}
+          {push.state === 'denied' && (
+            <p className="mt-3 inline-flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-bold text-secondary">
+              <BellSlash size={11} weight="bold" aria-hidden="true" />
+              {t('push.denied', { defaultValue: 'Notifications blocked in browser' })}
+            </p>
+          )}
         </div>
 
         {/* filter chips */}
