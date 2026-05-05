@@ -12,6 +12,7 @@
     <meta http-equiv="Content-Security-Policy" content="
       default-src 'self';
       script-src 'self';
+      script-src-attr 'unsafe-hashes' 'sha256-MhtPZXr7+LpJUY5qtMutB+qWfQtMaPccfe7QXtCcEYc=';
       style-src 'self' 'unsafe-inline' https://api.fontshare.com https://fonts.googleapis.com;
       font-src 'self' https://cdn.fontshare.com https://fonts.gstatic.com data:;
       img-src 'self' data: blob: https:;
@@ -24,6 +25,12 @@
       form-action 'self';
       upgrade-insecure-requests;
     " />
+    <!-- script-src-attr 'unsafe-hashes' + sha256-... allows ONLY the
+         specific inline event handler `this.media='all'` used by the
+         non-blocking font links below. nothing else inline can run.
+         this is the documented CSP escape hatch for legitimate inline
+         handlers without opening up to all unsafe-inline. -->
+
     <title>On-Ramp | Premium Crypto Gateway</title>
     <meta name="description" content="Buy and sell crypto in seconds — no signup required. Best rates guaranteed through smart routing across trusted on-ramp providers." />
     <meta name="theme-color" content="#f9f9f9" media="(prefers-color-scheme: light)" />
@@ -40,25 +47,25 @@
     <link rel="preconnect" href="https://cdn.fontshare.com" crossorigin />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <!-- non-blocking font load. browser starts downloading the CSS
-         immediately because the link is in the HTML head (parallelized
-         with the JS bundle), but media="print" means it doesn't apply
-         to screen until JS swaps it via the data-font-loader hook.
-         that swap happens inside main.jsx (a bundled, CSP-allowed
-         script) — no inline event handlers, CSP `script-src 'self'`
-         stays strict.
-         noscript fallback covers the no-JS case. -->
+    <!-- non-blocking font load: browser fetches the CSS immediately,
+         media="print" prevents it from applying to screen, the inline
+         onload swaps it to "all" the moment the CSS finishes
+         downloading. CSP allows ONLY this specific handler value via
+         script-src-attr 'unsafe-hashes' + sha256 (computed above).
+         applying via main.jsx instead caused a 0.8 CLS regression
+         because the swap fired after the JS bundle parsed (seconds
+         later on mobile) — too late to avoid a font-flip reflow. -->
     <link
       rel="stylesheet"
       href="https://api.fontshare.com/v2/css?f[]=switzer@400,500,600,700,800&display=swap"
       media="print"
-      data-font-loader=""
+      onload="this.media='all'"
     />
     <link
       rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap"
       media="print"
-      data-font-loader=""
+      onload="this.media='all'"
     />
     <noscript>
       <link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=switzer@400,500,600,700,800&display=swap" />
