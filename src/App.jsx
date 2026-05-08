@@ -23,6 +23,9 @@ import NotFoundPage from './pages/NotFoundPage'
 // admin chunks are also fenced behind their own bundle so the landing payload
 // never ships scrypt / jose verification code.
 const SwapPage = lazy(() => import('./pages/SwapPage'))
+// crypto↔crypto swap (SwapKit) lives at /swap. lazy-loaded — its
+// wallet stack (~150KB) is only fetched when the user navigates here.
+const SwapKitPage = lazy(() => import('./pages/SwapKitPage'))
 const PrivacyPage = lazy(() => import('./pages/PrivacyPage'))
 const TermsPage = lazy(() => import('./pages/TermsPage'))
 const AdminLayout = lazy(() => import('./pages/admin/AdminLayout'))
@@ -45,22 +48,21 @@ function RouteFallback() {
   )
 }
 
-// the "ramp app" surface (Buy/Sell/History) shares the same SwapPage
-// container so form state survives route flips. these three paths group
-// under the same pageKey so AnimatePresence treats the whole surface
-// as one page (cross-fade only on entering/leaving the ramp app, not on
-// /buy ↔ /sell ↔ /history within it).
-const RAMP_PATHS = ['/buy', '/sell', '/history']
-const isRampPath = (p) => RAMP_PATHS.some((r) => p === r || p.startsWith(r + '/'))
+// "app surface" routes — the in-app product (Buy/Sell/Swap/History/...).
+// they share Sidebar + BottomNav for nav, hide the public marketing
+// Header, and group under one pageKey so AnimatePresence cross-fades
+// only on entering/leaving the app surface (not on internal flips).
+const APP_PATHS = ['/buy', '/sell', '/history', '/swap']
+const isAppPath = (p) => APP_PATHS.some((r) => p === r || p.startsWith(r + '/'))
 
 function AnimatedRoutes() {
   const location = useLocation()
-  const pageKey = isRampPath(location.pathname)
-    ? '/ramp'
+  const pageKey = isAppPath(location.pathname)
+    ? '/app'
     : location.pathname.startsWith('/admin')
       ? '/admin'
       : location.pathname
-  const isRamp = isRampPath(location.pathname)
+  const isApp = isAppPath(location.pathname)
   const isAdmin = location.pathname.startsWith('/admin')
 
   // admin routes mount their own AdminLayout — no public Header/PageTransition.
@@ -79,7 +81,7 @@ function AnimatedRoutes() {
 
   return (
     <>
-      {!isRamp && <Header />}
+      {!isApp && <Header />}
       <AnimatePresence mode="wait">
         <PageTransition key={pageKey}>
           <Suspense fallback={<RouteFallback />}>
@@ -93,12 +95,14 @@ function AnimatedRoutes() {
               <Route path="/buy" element={<SwapPage />} />
               <Route path="/sell" element={<SwapPage />} />
               <Route path="/history" element={<SwapPage />} />
-              {/* legacy redirects — old /swap/* paths used to host buy/sell/
-                  history. external links (push notifications, customer
-                  support) may still target them. drop these once the
-                  /swap route is reclaimed by SwapKit and stable for a
-                  full notification TTL window (~30 days). */}
-              <Route path="/swap" element={<Navigate to="/buy" replace />} />
+              {/* crypto ↔ crypto swap surface (SwapKit, non-custodial). */}
+              <Route path="/swap" element={<SwapKitPage />} />
+              {/* legacy redirects — the old /swap path was the ramp Buy view
+                  and /swap/sell, /swap/history its siblings. external links
+                  (push notifications, customer support) may still target
+                  /swap/sell and /swap/history; redirect them. /swap itself
+                  is now a real page (SwapKit), so no redirect for the bare
+                  path — users who hit it land on the new swap UI. */}
               <Route path="/swap/sell" element={<Navigate to="/sell" replace />} />
               <Route path="/swap/history" element={<Navigate to="/history" replace />} />
               <Route path="*" element={<NotFoundPage />} />

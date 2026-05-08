@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom'
 import { motion } from 'motion/react'
-import { CreditCard, ArrowsLeftRight, ClockCounterClockwise, Sun, Moon } from '@phosphor-icons/react'
+import { CreditCard, ArrowsLeftRight, ClockCounterClockwise, Sun, Moon, Swap } from '@phosphor-icons/react'
 import { useTheme } from '../context/ThemeContext'
 import { BrandMark } from './BrandLogo'
 import { CRYPTOS } from '../config/cryptos'
@@ -17,6 +17,7 @@ import { PROVIDER_IDS } from '../providers'
 const sidebarLinks = [
   { Icon: CreditCard, label: 'Buy', to: '/buy' },
   { Icon: ArrowsLeftRight, label: 'Sell', to: '/sell' },
+  { Icon: Swap, label: 'Swap', to: '/swap' },
   { Icon: ClockCounterClockwise, label: 'History', to: '/history' },
 ]
 

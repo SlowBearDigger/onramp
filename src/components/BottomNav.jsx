@@ -2,16 +2,17 @@ import { useState, useEffect, useRef } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from 'motion/react'
-import { CreditCard, ArrowsLeftRight, ClockCounterClockwise, Sun, Moon, Gear } from '@phosphor-icons/react'
+import { CreditCard, ArrowsLeftRight, ClockCounterClockwise, Sun, Moon, Gear, Swap } from '@phosphor-icons/react'
 import { useTheme } from '../context/ThemeContext'
 import { SUPPORTED_LANGUAGES } from '../i18n'
 
 // mobile bottom nav.
 //
-// layout: four equal-width columns. three primary tabs (Buy/Sell/History)
-// + one Settings button. settings opens a popover with theme + language
-// inside, keeping the bar focused on navigation. four flex columns means
-// the bar is symmetrical regardless of how many utilities settings holds.
+// layout: five equal-width columns. four primary tabs
+// (Buy/Sell/Swap/History) + one Settings button. settings opens a
+// popover with theme + language inside, keeping the bar focused on
+// navigation. five flex columns means the bar stays symmetrical even
+// when the labels' translated lengths vary across locales.
 //
 // perf notes for ios:
 //   - backdrop-blur-sm (4px) instead of md (12px). md hits a known
@@ -28,6 +29,7 @@ export default function BottomNav() {
   const tabs = [
     { Icon: CreditCard, label: t('swap.tabs.buy'), to: '/buy' },
     { Icon: ArrowsLeftRight, label: t('swap.tabs.sell'), to: '/sell' },
+    { Icon: Swap, label: t('swap.tabs.swap', { defaultValue: 'Swap' }), to: '/swap' },
     { Icon: ClockCounterClockwise, label: t('history.title'), to: '/history', shortLabel: 'History' },
   ]
 
