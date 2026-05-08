@@ -1,11 +1,29 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, lazy, Suspense } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from 'motion/react'
-import { Sun, Moon, ArrowUpRight } from '@phosphor-icons/react'
+import { Sun, Moon, ArrowUpRight, Wallet } from '@phosphor-icons/react'
 import { useTheme } from '../context/ThemeContext'
 import LanguageSwitcher from './LanguageSwitcher'
 import { BrandLogo } from './BrandLogo'
+
+// WalletButton lazy-loaded so its wagmi+reown+solana deps (~150KB)
+// don't ride the main bundle. while loading we show a fixed-width
+// skeleton so the header layout doesn't shift when it appears.
+const WalletButton = lazy(() => import('./WalletButton'))
+
+function WalletButtonSkeleton() {
+  return (
+    <div
+      aria-hidden="true"
+      className="inline-flex items-center gap-1.5 px-3 py-2 sm:py-2.5 rounded-lg bg-surface-container-low/50 dark:bg-surface-container-high/30 text-secondary text-xs sm:text-sm"
+      style={{ minWidth: 96 }}
+    >
+      <Wallet size={14} weight="bold" />
+      <span className="hidden sm:inline opacity-50">Connect</span>
+    </div>
+  )
+}
 
 // asymmetric header.
 //
@@ -92,8 +110,18 @@ export default function Header() {
         </div>
 
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-          <LanguageSwitcher />
-          <ThemeToggle />
+          {/* hide language + theme on the smallest screens once the
+              wallet button is present — header would otherwise overflow
+              on iPhone SE width. they remain accessible via the
+              BottomNav settings popover on mobile. */}
+          <div className="hidden sm:contents">
+            <LanguageSwitcher />
+            <ThemeToggle />
+          </div>
+
+          <Suspense fallback={<WalletButtonSkeleton />}>
+            <WalletButton />
+          </Suspense>
 
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
@@ -102,7 +130,7 @@ export default function Header() {
           >
             <Link
               to="/buy"
-              className="inline-flex items-center gap-1 bg-primary text-on-primary pl-4 pr-3 py-2 sm:py-2.5 rounded-lg font-semibold text-xs sm:text-sm transition-all hover:bg-primary/90 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 group"
+              className="inline-flex items-center gap-1 bg-primary text-on-primary pl-3 sm:pl-4 pr-2.5 sm:pr-3 py-2 sm:py-2.5 rounded-lg font-semibold text-xs sm:text-sm transition-all hover:bg-primary/90 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 group"
             >
               <span>{t('header.openApp')}</span>
               <ArrowUpRight

@@ -7,6 +7,15 @@
     "cta": "Got it",
     "dismiss": "Dismiss"
   },
+  "wallet": {
+    "connect": "Connect",
+    "disabled": "Wallet disabled — config missing",
+    "menuLabel": "Wallet menu",
+    "connectedAs": "Connected wallet",
+    "copyAddress": "Copy address",
+    "copied": "Copied!",
+    "disconnect": "Disconnect"
+  },
   "settings": {
     "label": "Settings",
     "theme": "Theme",

@@ -58,6 +58,26 @@ export default defineConfig(({ mode }) => ({
       // runtime caching strategies and event handlers are in src/sw.js.
       injectManifest: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        // skip the wallet stack (~150-500KB chunks) from precache.
+        // these load only when the user opens the WalletButton or
+        // visits a swap route, and runtime caching (StaleWhileRevalidate
+        // for scripts, see src/sw.js) takes over once fetched.
+        // patterns cover Reown's chunk names (wui-*, dist-*, exports-*,
+        // proxy-*, ApiController-*, SolanaConstantsUtil-*) plus our own
+        // WalletButton chunk. these are stable across builds because
+        // vite/rolldown derives chunk names from imported module paths.
+        globIgnores: [
+          '**/wui-*.js',
+          '**/dist-*.js',
+          '**/exports-*.js',
+          '**/proxy-*.js',
+          '**/ApiController-*.js',
+          '**/Solana*.js',
+          '**/chains-*.js',
+          '**/WalletButton-*.js',
+        ],
+        // safety cap. anything else > 2MB still triggers a warning.
+        maximumFileSizeToCacheInBytes: 2 * 1024 * 1024,
       },
     }),
   ],

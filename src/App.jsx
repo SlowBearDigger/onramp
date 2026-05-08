@@ -11,6 +11,11 @@ import PrivacyDisclosure from './components/PrivacyDisclosure'
 import LandingPage from './pages/LandingPage'
 import NotFoundPage from './pages/NotFoundPage'
 
+// the wallet stack (Reown AppKit + wagmi + solana adapters, ~150KB)
+// is fully encapsulated inside the lazy-loaded WalletButton chunk.
+// no provider is needed here — Reown's hooks read from an internal
+// singleton initialized when WalletButton first imports its module.
+
 // route-level code splitting. landing stays eager because it's the entry
 // point — every other route is lazy. each lazy chunk loads in parallel with
 // the user's first interaction, so navigations feel instant on a warm cache.

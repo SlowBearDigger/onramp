@@ -1,4 +1,13 @@
 {
+  "wallet": {
+    "connect": "Conectar",
+    "disabled": "Wallet deshabilitada — falta configuración",
+    "menuLabel": "Menú de wallet",
+    "connectedAs": "Wallet conectada",
+    "copyAddress": "Copiar dirección",
+    "copied": "¡Copiado!",
+    "disconnect": "Desconectar"
+  },
   "settings": {
     "label": "Ajustes",
     "theme": "Tema",
