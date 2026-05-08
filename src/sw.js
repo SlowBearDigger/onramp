@@ -97,7 +97,7 @@ self.addEventListener('push', (event) => {
     data: {
       orderId: payload.orderId,
       status: payload.status,
-      url: payload.url || '/swap/history',
+      url: payload.url || '/history',
     },
   }
 
@@ -106,7 +106,7 @@ self.addEventListener('push', (event) => {
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close()
-  const targetPath = event.notification.data?.url || '/swap/history'
+  const targetPath = event.notification.data?.url || '/history'
 
   // try to focus an existing tab on the target URL; otherwise open a new one.
   event.waitUntil((async () => {

@@ -158,7 +158,7 @@ export async function sendOrderPush(order) {
 
   payload.orderId = order.id
   payload.status = order.status
-  payload.url = '/swap/history'
+  payload.url = '/history'
 
   const subs = listByCustomerStmt.all(order.customer_id)
   if (subs.length === 0) return

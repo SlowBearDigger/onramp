@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react'
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { AnimatePresence } from 'motion/react'
 import { CircleNotch } from '@phosphor-icons/react'
@@ -40,14 +40,22 @@ function RouteFallback() {
   )
 }
 
+// the "ramp app" surface (Buy/Sell/History) shares the same SwapPage
+// container so form state survives route flips. these three paths group
+// under the same pageKey so AnimatePresence treats the whole surface
+// as one page (cross-fade only on entering/leaving the ramp app, not on
+// /buy ↔ /sell ↔ /history within it).
+const RAMP_PATHS = ['/buy', '/sell', '/history']
+const isRampPath = (p) => RAMP_PATHS.some((r) => p === r || p.startsWith(r + '/'))
+
 function AnimatedRoutes() {
   const location = useLocation()
-  const pageKey = location.pathname.startsWith('/swap')
-    ? '/swap'
+  const pageKey = isRampPath(location.pathname)
+    ? '/ramp'
     : location.pathname.startsWith('/admin')
       ? '/admin'
       : location.pathname
-  const isSwap = location.pathname.startsWith('/swap')
+  const isRamp = isRampPath(location.pathname)
   const isAdmin = location.pathname.startsWith('/admin')
 
   // admin routes mount their own AdminLayout — no public Header/PageTransition.
@@ -66,7 +74,7 @@ function AnimatedRoutes() {
 
   return (
     <>
-      {!isSwap && <Header />}
+      {!isRamp && <Header />}
       <AnimatePresence mode="wait">
         <PageTransition key={pageKey}>
           <Suspense fallback={<RouteFallback />}>
@@ -74,10 +82,20 @@ function AnimatedRoutes() {
               <Route path="/" element={<LandingPage />} />
               <Route path="/privacy" element={<PrivacyPage />} />
               <Route path="/terms" element={<TermsPage />} />
-              {/* swap/* wildcard so SwapPage stays mounted across mode/view
-                  changes — buy ↔ sell ↔ history transitions feel smooth
-                  instead of remounting the whole tree. */}
-              <Route path="/swap/*" element={<SwapPage />} />
+              {/* ramp app surface (fiat ↔ crypto via Transak/MtPelerin/Topper).
+                  three sibling routes share SwapPage as their container so
+                  form state and the live ticker survive flips. */}
+              <Route path="/buy" element={<SwapPage />} />
+              <Route path="/sell" element={<SwapPage />} />
+              <Route path="/history" element={<SwapPage />} />
+              {/* legacy redirects — old /swap/* paths used to host buy/sell/
+                  history. external links (push notifications, customer
+                  support) may still target them. drop these once the
+                  /swap route is reclaimed by SwapKit and stable for a
+                  full notification TTL window (~30 days). */}
+              <Route path="/swap" element={<Navigate to="/buy" replace />} />
+              <Route path="/swap/sell" element={<Navigate to="/sell" replace />} />
+              <Route path="/swap/history" element={<Navigate to="/history" replace />} />
               <Route path="*" element={<NotFoundPage />} />
             </Routes>
           </Suspense>

@@ -1,13 +1,13 @@
 import { test, expect } from '@playwright/test'
 
 // landing page smoke tests. covers the highest-value user-facing surface:
-// hero loads, primary CTA navigates to /swap, footer links work.
+// hero loads, primary CTA navigates to /buy, footer links work.
 //
 // playwright gives each test a fresh BrowserContext so localStorage is
 // clean by default — no need to clear it manually (which would otherwise
 // also wipe persistence on reload, breaking those assertions).
 
-test('landing page renders and primary CTA goes to /swap', async ({ page }) => {
+test('landing page renders and primary CTA goes to /buy', async ({ page }) => {
   await page.goto('')
 
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
@@ -16,15 +16,15 @@ test('landing page renders and primary CTA goes to /swap', async ({ page }) => {
   await expect(buyButton).toBeVisible()
   await buyButton.click()
 
-  await expect(page).toHaveURL(/\/swap$/)
+  await expect(page).toHaveURL(/\/buy$/)
 })
 
-test('header CTA "Open" goes to /swap', async ({ page }) => {
+test('header CTA "Open" goes to /buy', async ({ page }) => {
   await page.goto('')
   // header CTA renders the i18n string `header.openApp` which is "Open" in EN.
   // it's a Link, so role=link.
   await page.getByRole('link', { name: 'Open' }).click()
-  await expect(page).toHaveURL(/\/swap/)
+  await expect(page).toHaveURL(/\/buy/)
 })
 
 test('footer links to /privacy and /terms work', async ({ page }) => {

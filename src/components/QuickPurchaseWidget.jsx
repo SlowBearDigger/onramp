@@ -32,7 +32,7 @@ export default function QuickPurchaseWidget({ onCryptoChange }) {
         <div className="flex justify-between items-center mb-6 sm:mb-8">
           <h2 className="text-lg sm:text-xl font-bold text-on-surface font-[family-name:var(--font-family-display)] m-0">{t('quickPurchase.title')}</h2>
           <button
-            onClick={() => navigate('/swap')}
+            onClick={() => navigate('/buy')}
             className="text-secondary cursor-pointer flex items-center gap-1 hover:text-primary transition-colors"
             aria-label={t('quickPurchase.openFull')}
             title={t('quickPurchase.openFull')}
@@ -67,7 +67,7 @@ export default function QuickPurchaseWidget({ onCryptoChange }) {
           <div className="flex justify-center -my-3 relative z-20">
             <motion.button
               type="button"
-              onClick={() => navigate('/swap/sell')}
+              onClick={() => navigate('/sell')}
               aria-label={t('quickPurchase.swapToSell')}
               title={t('quickPurchase.swapToSell')}
               className="w-10 h-10 text-white rounded-full flex items-center justify-center shadow-lg cursor-pointer duration-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
@@ -146,7 +146,7 @@ export default function QuickPurchaseWidget({ onCryptoChange }) {
           </div>
 
           <MagneticButton
-            onClick={() => navigate('/swap')}
+            onClick={() => navigate('/buy')}
             className="w-full py-3.5 sm:py-4 rounded-xl font-bold text-base sm:text-lg duration-500 hover:shadow-lg"
             style={{ backgroundColor: crypto.color, color: getOnColor(crypto.color) }}
           >

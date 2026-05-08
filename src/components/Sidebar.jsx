@@ -15,9 +15,9 @@ import { PROVIDER_IDS } from '../providers'
 // pulled from the registry so they stay accurate as the product grows.
 
 const sidebarLinks = [
-  { Icon: CreditCard, label: 'Buy', to: '/swap' },
-  { Icon: ArrowsLeftRight, label: 'Sell', to: '/swap/sell' },
-  { Icon: ClockCounterClockwise, label: 'History', to: '/swap/history' },
+  { Icon: CreditCard, label: 'Buy', to: '/buy' },
+  { Icon: ArrowsLeftRight, label: 'Sell', to: '/sell' },
+  { Icon: ClockCounterClockwise, label: 'History', to: '/history' },
 ]
 
 function SidebarThemeToggle() {
@@ -40,10 +40,7 @@ function SidebarThemeToggle() {
 export default function Sidebar() {
   const location = useLocation()
 
-  const isActive = (to) => {
-    if (to === '/swap') return location.pathname === '/swap'
-    return location.pathname === to
-  }
+  const isActive = (to) => location.pathname === to
 
   return (
     <motion.aside

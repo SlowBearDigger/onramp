@@ -158,7 +158,7 @@ export default function SwapWidget({ onCryptoChange, mode = 'buy', onViewHistory
       if (successPendingRef.current) {
         successPendingRef.current = false
         // delay a tick so the close transition can play. onViewHistory is
-        // wired by SwapPage to navigate('/swap/history').
+        // wired by SwapPage to navigate('/history').
         setTimeout(() => onViewHistory?.(), 200)
       }
     },
@@ -328,7 +328,7 @@ export default function SwapWidget({ onCryptoChange, mode = 'buy', onViewHistory
               both. */}
           <div role="tablist" aria-label={t('swap.tabs.buy') + ' / ' + t('swap.tabs.sell')} className="bg-surface-container-low dark:bg-surface-container-high/50 p-1 rounded-lg flex dark:border dark:border-outline-variant/10">
             <Link
-              to="/swap"
+              to="/buy"
               role="tab"
               aria-selected={!isSell}
               className={`px-4 sm:px-6 py-1.5 rounded-lg font-semibold text-xs sm:text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${!isSell ? 'bg-surface-container-lowest text-primary shadow-sm' : 'text-secondary hover:text-on-surface'}`}
@@ -336,7 +336,7 @@ export default function SwapWidget({ onCryptoChange, mode = 'buy', onViewHistory
               {t('swap.tabs.buy')}
             </Link>
             <Link
-              to="/swap/sell"
+              to="/sell"
               role="tab"
               aria-selected={isSell}
               className={`px-4 sm:px-6 py-1.5 rounded-lg font-semibold text-xs sm:text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${isSell ? 'bg-surface-container-lowest text-primary shadow-sm' : 'text-secondary hover:text-on-surface'}`}
@@ -503,7 +503,7 @@ export default function SwapWidget({ onCryptoChange, mode = 'buy', onViewHistory
                   <StaggerItem className="flex justify-center">
                     <motion.button
                       type="button"
-                      onClick={() => navigate(isSell ? '/swap' : '/swap/sell')}
+                      onClick={() => navigate(isSell ? '/buy' : '/sell')}
                       aria-label={isSell ? t('swap.swapToBuy') : t('swap.swapToSell')}
                       title={isSell ? t('swap.swapToBuy') : t('swap.swapToSell')}
                       className="w-11 h-11 bg-surface-container-lowest dark:bg-surface-container rounded-full flex items-center justify-center border-2 border-outline-variant/15 dark:border-white/10 cursor-pointer relative z-10 hover:border-primary/40 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 shadow-sm shadow-black/5 dark:shadow-black/20"

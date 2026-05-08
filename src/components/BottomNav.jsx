@@ -26,12 +26,12 @@ export default function BottomNav() {
   const settingsWrapRef = useRef(null)
 
   const tabs = [
-    { Icon: CreditCard, label: t('swap.tabs.buy'), to: '/swap' },
-    { Icon: ArrowsLeftRight, label: t('swap.tabs.sell'), to: '/swap/sell' },
-    { Icon: ClockCounterClockwise, label: t('history.title'), to: '/swap/history', shortLabel: 'History' },
+    { Icon: CreditCard, label: t('swap.tabs.buy'), to: '/buy' },
+    { Icon: ArrowsLeftRight, label: t('swap.tabs.sell'), to: '/sell' },
+    { Icon: ClockCounterClockwise, label: t('history.title'), to: '/history', shortLabel: 'History' },
   ]
 
-  const isActive = (to) => to === '/swap' ? location.pathname === '/swap' : location.pathname === to
+  const isActive = (to) => location.pathname === to
   const currentLang = SUPPORTED_LANGUAGES.find((l) => l.code === i18n.language?.slice(0, 2)) || SUPPORTED_LANGUAGES[0]
 
   useEffect(() => {

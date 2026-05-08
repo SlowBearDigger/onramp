@@ -197,7 +197,7 @@ export default function HistoryView() {
                 : t('history.emptyFilteredDesc', { filter: t(`history.filters.${filter}`).toLowerCase() })}
             </p>
             <MagneticButton
-              onClick={() => navigate('/swap')}
+              onClick={() => navigate('/buy')}
               className="inline-flex items-center gap-1.5 bg-primary text-on-primary px-5 py-2.5 rounded-lg font-bold text-sm hover:opacity-90 transition-opacity"
             >
               {t('history.emptyCta')}

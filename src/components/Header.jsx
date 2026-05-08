@@ -101,7 +101,7 @@ export default function Header() {
             transition={{ delay: 0.4, type: 'spring', stiffness: 200 }}
           >
             <Link
-              to="/swap"
+              to="/buy"
               className="inline-flex items-center gap-1 bg-primary text-on-primary pl-4 pr-3 py-2 sm:py-2.5 rounded-lg font-semibold text-xs sm:text-sm transition-all hover:bg-primary/90 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 group"
             >
               <span>{t('header.openApp')}</span>

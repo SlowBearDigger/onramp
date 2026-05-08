@@ -116,7 +116,7 @@ free tiers that cover either.
    stats (no orders yet).
 4. Complete a test purchase in Transak using their staging test card
    (`4111 1111 1111 1111`). Within ~1 minute, the order shows up in
-   the admin dashboard and in the user's `/swap/history` (cold-start
+   the admin dashboard and in the user's `/history` (cold-start
    delay if the service was sleeping).
 
 ## Updating after the initial deploy
@@ -146,7 +146,7 @@ to **Read and write permissions** OR the workflow's `permissions:`
 block must list what it needs (it already does — `pages: write` and
 `id-token: write`).
 
-### Frontend loads but `/swap` shows blank
+### Frontend loads but `/buy` shows blank
 
 Likely `VITE_API_BASE_URL` is wrong. Open browser dev tools → Console.
 You'll see CORS or network errors pointing at the wrong URL. Update

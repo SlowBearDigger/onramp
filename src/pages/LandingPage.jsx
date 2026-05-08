@@ -64,7 +64,7 @@ function Hero({ onCryptoChange, cryptoColor }) {
 
           <FadeIn delay={0.45}>
             <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4">
-              <MagneticButton onClick={() => navigate('/swap')} className="bg-primary text-on-primary px-8 py-4 rounded-xl font-bold font-[family-name:var(--font-family-display)] text-base sm:text-lg transition-colors hover:bg-primary/90 w-full sm:w-auto">
+              <MagneticButton onClick={() => navigate('/buy')} className="bg-primary text-on-primary px-8 py-4 rounded-xl font-bold font-[family-name:var(--font-family-display)] text-base sm:text-lg transition-colors hover:bg-primary/90 w-full sm:w-auto">
                 {t('landing.buyNow')}
               </MagneticButton>
               {/* secondary CTA scrolls to features for new visitors. "View
@@ -154,7 +154,7 @@ export default function LandingPage() {
     try { already = sessionStorage.getItem(PWA_REDIRECT_FLAG) === '1' } catch { /* private mode */ }
     if (already) return
     try { sessionStorage.setItem(PWA_REDIRECT_FLAG, '1') } catch { /* private mode */ }
-    navigate('/swap', { replace: true })
+    navigate('/buy', { replace: true })
   }, [isStandalone, navigate])
 
   return (

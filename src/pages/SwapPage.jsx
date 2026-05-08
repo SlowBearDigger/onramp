@@ -16,10 +16,16 @@ const HistoryView = lazy(() => import('../components/HistoryView'))
 // derive `view` and `mode` from the current pathname. keeping this pure
 // makes the routing decision testable and predictable — no nested route
 // elements to chase, no Outlet context to thread.
-function deriveSwapState(pathname) {
-  if (pathname.endsWith('/history')) return { view: 'history', mode: 'buy' }
-  if (pathname.endsWith('/sell')) return { view: 'swap', mode: 'sell' }
-  return { view: 'swap', mode: 'buy' }
+//
+// route map:
+//   /history  → history view
+//   /sell     → ramp form, sell mode
+//   /buy      → ramp form, buy mode (default)
+//   anything else (legacy /swap/* redirects) → buy
+function deriveRampState(pathname) {
+  if (pathname === '/history') return { view: 'history', mode: 'buy' }
+  if (pathname === '/sell') return { view: 'ramp', mode: 'sell' }
+  return { view: 'ramp', mode: 'buy' }
 }
 
 export default function SwapPage() {
@@ -27,7 +33,7 @@ export default function SwapPage() {
   const [warpPhase, setWarpPhase] = useState('idle')
   const navigate = useNavigate()
   const location = useLocation()
-  const { view, mode } = deriveSwapState(location.pathname)
+  const { view, mode } = deriveRampState(location.pathname)
 
   return (
     <div className="min-h-screen transition-colors duration-300 relative">
@@ -35,13 +41,14 @@ export default function SwapPage() {
       <Sidebar />
       <main className="min-h-screen flex items-center justify-center px-4 py-8 pb-28 sm:py-12 md:pb-12 md:pl-64 relative z-10">
         <div className="w-full max-w-lg">
-          {/* AnimatePresence on the VIEW level (swap vs history). within the
-              swap view the SwapWidget itself stays mounted across mode flips
-              so form state is preserved — only its inner labels cross-fade. */}
+          {/* AnimatePresence on the VIEW level (ramp form vs history).
+              within the ramp form the SwapWidget itself stays mounted
+              across mode flips so form state is preserved — only its
+              inner labels cross-fade. */}
           <AnimatePresence mode="wait">
-            {view === 'swap' ? (
+            {view === 'ramp' ? (
               <motion.div
-                key="swap"
+                key="ramp"
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -8 }}
@@ -50,7 +57,7 @@ export default function SwapPage() {
                 <SwapWidget
                   mode={mode}
                   onCryptoChange={setActiveCrypto}
-                  onViewHistory={() => navigate('/swap/history')}
+                  onViewHistory={() => navigate('/history')}
                   onWarpChange={setWarpPhase}
                 />
               </motion.div>

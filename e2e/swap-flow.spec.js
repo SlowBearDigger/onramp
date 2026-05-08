@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test'
 
-// swap flow — covers the high-value path:
-//   /swap (buy) → toggle to /swap/sell → toggle back → form remains
+// ramp app flow — covers the high-value path:
+//   /buy → toggle to /sell → toggle back → form values survive
 //
 // the SwapWidget stays mounted across mode flips (URL-driven) so the form
 // values shouldn't reset when flipping. this regressed twice during the
@@ -21,7 +21,7 @@ async function dismissBanner(page) {
 }
 
 test('amount input survives buy↔sell tab flip', async ({ page }) => {
-  await page.goto('swap')
+  await page.goto('buy')
   await dismissBanner(page)
 
   const amountInput = page.locator('#swap-pay-amount')
@@ -30,10 +30,10 @@ test('amount input survives buy↔sell tab flip', async ({ page }) => {
 
   // tabs are role="tab" inside a tablist, with localized text "Buy" / "Sell"
   await page.getByRole('tab', { name: 'Sell' }).click()
-  await expect(page).toHaveURL(/\/swap\/sell$/)
+  await expect(page).toHaveURL(/\/sell$/)
 
   await page.getByRole('tab', { name: 'Buy' }).click()
-  await expect(page).toHaveURL(/\/swap$/)
+  await expect(page).toHaveURL(/\/buy$/)
 
   // value should still be there since the widget stays mounted across
   // mode flips. this regressed twice during the route refactor.
@@ -45,7 +45,7 @@ test('history view renders an actionable state without backend connectivity', as
   // the orders fetch fails fast. the page must still render something
   // useful — either the empty state (no last-used wallet) or the error
   // badge (fetch failed) — never crash silently.
-  await page.goto('swap/history')
+  await page.goto('history')
   // the heading always renders regardless of fetch state
   await expect(page.getByRole('heading', { name: /Transaction History/i })).toBeVisible()
   // and exactly one of: empty state CTA, error badge, or loading spinner
@@ -54,7 +54,7 @@ test('history view renders an actionable state without backend connectivity', as
 })
 
 test('quick amount chips populate the amount input', async ({ page }) => {
-  await page.goto('swap')
+  await page.goto('buy')
   await dismissBanner(page)
 
   // chips render literal "$50" / "$100" / "$1000" — use exact match so
