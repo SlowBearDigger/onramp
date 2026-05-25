@@ -1,4 +1,29 @@
 {
+  "swapkit": {
+    "title": "Swap",
+    "subtitle": "Crypto a crypto cross-chain",
+    "preview": "preview",
+    "youPay": "Tú pagas",
+    "youReceive": "Recibes",
+    "estimated": "Estimado",
+    "flipDirection": "Invertir dirección",
+    "slippage": "Slippage",
+    "customSlippage": "Slippage personalizado",
+    "slippageHelp": "Mayor tolerancia = más probable que se ejecute pero peor tasa. 1% va bien para single-chain de stables; 3-5% para cross-chain.",
+    "searchTokens": "Buscar tokens o chains…",
+    "noTokensFound": "Sin tokens que coincidan",
+    "changeToken": "Cambiar token (actual: {{token}})",
+    "footnote": "Powered by SwapKit. Liquidez de THORChain, Chainflip, NEAR Intents y otros. Non-custodial — vos firmás cada transacción con tu propia wallet.",
+    "cta": {
+      "notConfigured": "Wallet connect no disponible",
+      "notConfiguredHelp": "El servicio de wallet connect no está configurado en este build. Setear VITE_REOWN_PROJECT_ID para activar.",
+      "connect": "Conectar wallet para swap",
+      "connectHelp": "Non-custodial — tus claves, tus monedas. Conectá MetaMask, WalletConnect, Phantom o cualquier wallet soportada.",
+      "enterAmount": "Ingresá un monto",
+      "getQuote": "Obtener cotización",
+      "signingAs": "Firmando como {{address}}"
+    }
+  },
   "wallet": {
     "connect": "Conectar",
     "disabled": "Wallet deshabilitada — falta configuración",
@@ -176,6 +201,25 @@
     "subtitle": "El enlace puede estar roto o la página se ha movido. Te llevamos de vuelta al inicio.",
     "backHome": "Volver al inicio"
   },
+  "onboarding": {
+    "aria": "Tour de bienvenida",
+    "skip": "Saltar tour",
+    "prev": "Anterior",
+    "next": "Siguiente",
+    "gotIt": "Entendido",
+    "buy": {
+      "title": "Compra y vende cripto",
+      "body": "Compara los mejores proveedores de on-ramp en un solo lugar. Sin registro — el KYC se hace dentro del flujo seguro del proveedor cuando hace falta."
+    },
+    "swap": {
+      "title": "Swaps cross-chain",
+      "body": "Intercambia cualquier token entre chains vía SwapKit. Non-custodial — tu wallet firma cada transacción."
+    },
+    "history": {
+      "title": "Lleva el control",
+      "body": "Tus órdenes aparecen aquí automáticamente. Estado en vivo, sin cuenta."
+    }
+  },
   "history": {
     "localStorageNotice": "Tu última dirección de wallet se guarda en este navegador para mostrarte el historial sin necesidad de cuenta. Borra los datos del navegador o cambia de dispositivo para reiniciar.",
     "title": "Historial de transacciones",
@@ -189,6 +233,8 @@
     "emptyAllDesc": "Cuando compres o vendas cripto desde la app, tus transacciones aparecerán aquí.",
     "emptyFilteredDesc": "Cambia a \"Todas\" para ver todo, o inicia una orden de {{filter}}.",
     "emptyCta": "Comprar cripto",
+    "emptyTrySwap": "Probar un swap",
+    "emptyShowAll": "Ver todas las transacciones",
     "filters": {
       "all": "Todas",
       "buy": "Compras",

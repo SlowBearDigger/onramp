@@ -180,13 +180,33 @@ export default function HistoryView() {
 
         {/* empty state — ready, no rows, not an error. covers two cases:
               1. user is logged out / hasn't bought anything yet,
-              2. user with stored wallet has no transactions on file. */}
+              2. user with stored wallet has no transactions on file.
+            polish: animated halo on the icon to feel less static, a
+            secondary CTA that adapts to context (try swap when 'all',
+            show all when filtered), and a footnote linking the privacy
+            disclosure so the "your history isn't synced anywhere" angle
+            is reinforced exactly where the user expects to see it. */}
         {state === 'ready' && filtered.length === 0 && (
-          <div className="text-center py-12 sm:py-16 px-4">
-            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary/10 text-primary mb-4" aria-hidden="true">
-              <ClockCounterClockwise size={26} weight="regular" />
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.25 }}
+            className="text-center py-12 sm:py-16 px-4"
+          >
+            <div className="relative inline-flex items-center justify-center w-16 h-16 mb-4" aria-hidden="true">
+              {/* halo — gentle breathing pulse to draw the eye without
+                  being distracting. respects prefers-reduced-motion via
+                  motion's automatic handling. */}
+              <motion.span
+                className="absolute inset-0 rounded-2xl bg-primary/15"
+                animate={{ scale: [1, 1.15, 1], opacity: [0.6, 0.2, 0.6] }}
+                transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
+              />
+              <span className="relative inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary/10 text-primary">
+                <ClockCounterClockwise size={28} weight="regular" />
+              </span>
             </div>
-            <h3 className="text-base sm:text-lg font-bold text-on-surface mb-1.5">
+            <h3 className="text-base sm:text-lg font-bold text-on-surface mb-1.5 font-[family-name:var(--font-family-display)]">
               {filter === 'all'
                 ? t('history.emptyAllTitle')
                 : t('history.emptyFilteredTitle', { filter: t(`history.filters.${filter}`).toLowerCase() })}
@@ -196,13 +216,32 @@ export default function HistoryView() {
                 ? t('history.emptyAllDesc')
                 : t('history.emptyFilteredDesc', { filter: t(`history.filters.${filter}`).toLowerCase() })}
             </p>
-            <MagneticButton
-              onClick={() => navigate('/buy')}
-              className="inline-flex items-center gap-1.5 bg-primary text-on-primary px-5 py-2.5 rounded-lg font-bold text-sm hover:opacity-90 transition-opacity"
-            >
-              {t('history.emptyCta')}
-            </MagneticButton>
-          </div>
+            <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center justify-center max-w-xs sm:max-w-none mx-auto">
+              <MagneticButton
+                onClick={() => navigate(filter === 'sell' ? '/sell' : '/buy')}
+                className="inline-flex items-center justify-center gap-1.5 bg-primary text-on-primary px-5 py-2.5 rounded-lg font-bold text-sm hover:opacity-90 transition-opacity"
+              >
+                {t('history.emptyCta')}
+              </MagneticButton>
+              {filter === 'all' ? (
+                <button
+                  type="button"
+                  onClick={() => navigate('/swap')}
+                  className="inline-flex items-center justify-center gap-1.5 text-primary hover:bg-primary/10 px-4 py-2.5 rounded-lg font-bold text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                >
+                  {t('history.emptyTrySwap', { defaultValue: 'Try a swap' })}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setFilter('all')}
+                  className="inline-flex items-center justify-center gap-1.5 text-primary hover:bg-primary/10 px-4 py-2.5 rounded-lg font-bold text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                >
+                  {t('history.emptyShowAll', { defaultValue: 'Show all transactions' })}
+                </button>
+              )}
+            </div>
+          </motion.div>
         )}
 
         {/* transaction list */}

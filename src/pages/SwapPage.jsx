@@ -7,6 +7,7 @@ import BottomNav from '../components/BottomNav'
 import ReactiveBlobs from '../components/ReactiveBlobs'
 import SwapWidget from '../components/SwapWidget'
 import OrderToasts from '../components/OrderToasts'
+import OnboardingTour from '../components/OnboardingTour'
 import { CRYPTOS } from '../config/cryptos'
 
 // HistoryView is the only swap-section view that's heavy enough to warrant
@@ -87,6 +88,9 @@ export default function SwapPage() {
           here (not at App level) so it only runs while the user is on
           a swap-section route, where useOrders is already polling. */}
       <OrderToasts />
+      {/* first-visit welcome tour. one-shot via localStorage; also mounted
+          on /swap so a user landing there first still sees it. */}
+      <OnboardingTour />
     </div>
   )
 }

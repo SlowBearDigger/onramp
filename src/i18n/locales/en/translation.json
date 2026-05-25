@@ -7,6 +7,31 @@
     "cta": "Got it",
     "dismiss": "Dismiss"
   },
+  "swapkit": {
+    "title": "Swap",
+    "subtitle": "Cross-chain crypto-to-crypto",
+    "preview": "preview",
+    "youPay": "You pay",
+    "youReceive": "You receive",
+    "estimated": "Estimated",
+    "flipDirection": "Flip direction",
+    "slippage": "Slippage",
+    "customSlippage": "Custom slippage",
+    "slippageHelp": "Higher tolerance = more likely to succeed but worse rate. 1% is good for single-chain stable swaps; 3-5% for cross-chain.",
+    "searchTokens": "Search tokens or chains…",
+    "noTokensFound": "No tokens match",
+    "changeToken": "Change token (current: {{token}})",
+    "footnote": "Powered by SwapKit. Liquidity from THORChain, Chainflip, NEAR Intents and others. Non-custodial — you sign every transaction with your own wallet.",
+    "cta": {
+      "notConfigured": "Wallet connect unavailable",
+      "notConfiguredHelp": "The wallet connect service isn't configured on this build. Set VITE_REOWN_PROJECT_ID to enable.",
+      "connect": "Connect wallet to swap",
+      "connectHelp": "Non-custodial — your keys, your coins. Connect MetaMask, WalletConnect, Phantom, or any supported wallet.",
+      "enterAmount": "Enter an amount",
+      "getQuote": "Get quote",
+      "signingAs": "Signing as {{address}}"
+    }
+  },
   "wallet": {
     "connect": "Connect",
     "disabled": "Wallet disabled — config missing",
@@ -176,6 +201,25 @@
     "subtitle": "The link might be broken or the page may have moved. Let's get you back home.",
     "backHome": "Back home"
   },
+  "onboarding": {
+    "aria": "Welcome tour",
+    "skip": "Skip tour",
+    "prev": "Previous",
+    "next": "Next",
+    "gotIt": "Got it",
+    "buy": {
+      "title": "Buy & sell crypto",
+      "body": "Compare top on-ramp providers in one place. No signup — KYC happens inside the provider's secure flow when needed."
+    },
+    "swap": {
+      "title": "Cross-chain swaps",
+      "body": "Swap any token across chains via SwapKit. Non-custodial — your wallet signs every transaction."
+    },
+    "history": {
+      "title": "Track everything",
+      "body": "Your orders show up here automatically. Status updates live, no account required."
+    }
+  },
   "history": {
     "localStorageNotice": "Your last-used wallet address is remembered in this browser so we can show your history without an account. Clear browser data or switch device to reset.",
     "title": "Transaction History",
@@ -189,6 +233,8 @@
     "emptyAllDesc": "When you buy or sell crypto through the app, your transactions will show up here.",
     "emptyFilteredDesc": "Switch to \"All\" to see every transaction, or start a {{filter}} order.",
     "emptyCta": "Buy crypto",
+    "emptyTrySwap": "Try a swap",
+    "emptyShowAll": "Show all transactions",
     "filters": {
       "all": "All",
       "buy": "Buy",

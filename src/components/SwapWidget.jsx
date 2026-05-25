@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from 'motion/react'
 import { CaretDown, ArrowsDownUp, SealCheck, Wallet as WalletIcon, Bank, Check } from '@phosphor-icons/react'
@@ -112,15 +112,45 @@ function formatCryptoAmount(n) {
   return n.toFixed(8)
 }
 
+// deep-link URL params support. on mount, read ?asset=BTC&fiat=USD&amount=100
+// and pre-fill the form. enables sharing URLs like
+// app.<domain>/buy?asset=ETH&fiat=EUR&amount=50 from QR codes, blog posts,
+// email campaigns. resolution is loose — invalid values fall through to
+// defaults silently rather than blocking the user.
+function resolveInitialAsset(searchParams) {
+  const wanted = (searchParams.get('asset') || '').toUpperCase().trim()
+  if (!wanted) return CRYPTOS[0]
+  const match = CRYPTOS.find((c) => c.symbol === wanted)
+  return match || CRYPTOS[0]
+}
+function resolveInitialFiat(searchParams) {
+  const wanted = (searchParams.get('fiat') || '').toUpperCase().trim()
+  if (!wanted) return FIAT_OPTIONS[0]
+  const match = FIAT_OPTIONS.find((f) => f.code === wanted)
+  return match || FIAT_OPTIONS[0]
+}
+function resolveInitialAmount(searchParams) {
+  const raw = searchParams.get('amount')
+  const n = Number(raw)
+  // clamp to a sensible range — protects against malicious URLs with
+  // absurd amounts that would crash the form or hit transak limits.
+  if (Number.isFinite(n) && n > 0 && n <= 100_000) return Math.round(n)
+  return 500
+}
+
 export default function SwapWidget({ onCryptoChange, mode = 'buy', onViewHistory, onWarpChange }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const [selectedAmount, setSelectedAmount] = useState(500)
-  const [buyInput, setBuyInput] = useState('500')
+  const [searchParams] = useSearchParams()
+  const initialAmount = resolveInitialAmount(searchParams)
+  const initialCrypto = resolveInitialAsset(searchParams)
+  const initialFiat = resolveInitialFiat(searchParams)
+  const [selectedAmount, setSelectedAmount] = useState(initialAmount)
+  const [buyInput, setBuyInput] = useState(String(initialAmount))
   const [sellAmount, setSellAmount] = useState('')
-  const [crypto, setCrypto] = useState(CRYPTOS[0])
+  const [crypto, setCrypto] = useState(initialCrypto)
   const [showCryptoMenu, setShowCryptoMenu] = useState(false)
-  const [fiat, setFiat] = useState(FIAT_OPTIONS[0])
+  const [fiat, setFiat] = useState(initialFiat)
   const [showFiatMenu, setShowFiatMenu] = useState(false)
   const [payMethod, setPayMethod] = useState(PAYMENT_METHODS[0])
   const [showPayMenu, setShowPayMenu] = useState(false)
@@ -254,6 +284,17 @@ export default function SwapWidget({ onCryptoChange, mode = 'buy', onViewHistory
     setQuoteCards([])
     provider.close()
   }
+
+  // sync the deep-linked initial crypto to the parent (SwapPage uses
+   // it for the reactive blob color). without this, a user landing on
+   // /buy?asset=ETH sees BTC-colored blobs because the parent's state
+   // was set to CRYPTOS[0] at SwapPage mount, before SwapWidget had a
+   // chance to derive crypto from the URL. fires once on mount only;
+   // user-driven changes flow through handleCryptoSelect already.
+  useEffect(() => {
+    onCryptoChange?.(initialCrypto)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // fetch quotes from all providers in parallel when entering 'compare'.
   // transak: real backend proxy. mtpelerin/topper: 501 placeholder until their
