@@ -82,11 +82,13 @@
     "titlePart2": "comprar cripto.",
     "subtitle": "Sin registro. Compara los principales proveedores de on-ramp en un solo lugar y obtén las comisiones más bajas con entrega inmediata directamente a tu wallet.",
     "buyNow": "Comprar ahora",
+    "swapNow": "Hacer swap",
     "viewHistory": "Ver historial",
     "chips": {
       "nonCustodial": "No-Custodial",
       "noSignup": "Sin registro",
-      "instantDelivery": "Entrega instantánea"
+      "instantDelivery": "Entrega instantánea",
+      "crossChain": "Cross-Chain"
     },
     "features": {
       "heading": "Diseñado para la simplicidad.",
@@ -102,6 +104,10 @@
       "instant": {
         "title": "Entrega instantánea",
         "desc": "Sin tiempos de espera. Una vez confirmado el pago, tus activos digitales se envían inmediatamente a tu wallet privada."
+      },
+      "crossChain": {
+        "title": "Swaps Cross-Chain",
+        "desc": "Intercambia cualquier token entre chains vía THORChain, Chainflip y NEAR Intents. Non-custodial — tu wallet firma cada transacción."
       }
     },
     "howItWorks": "Cómo funciona"

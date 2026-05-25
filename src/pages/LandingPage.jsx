@@ -12,7 +12,7 @@ import { CRYPTOS } from '../config/cryptos'
 // ~0.05 to 0.26 because the blobs faded in after first paint, which
 // the CLS heuristic treats as a layout shift even though the element
 // is position:absolute inside position:fixed.
-import { NoSignupDemo, InstantDemo, BestRatesDemo } from '../components/FeatureDemos'
+import { NoSignupDemo, InstantDemo, BestRatesDemo, CrossChainDemo } from '../components/FeatureDemos'
 import { usePwaDisplayMode } from '../hooks/usePwaDisplayMode'
 
 // session flag: once we've auto-redirected an installed PWA user from /
@@ -31,10 +31,15 @@ import {
 function Hero({ onCryptoChange, cryptoColor }) {
   const navigate = useNavigate()
   const { t } = useTranslation()
+  // chips advertise the product surface in two beats — first the trust
+  // anchor (non-custodial, no signup), then capability (instant + new:
+  // cross-chain). order matters: the first chip is the strongest
+  // differentiator vs centralized competitors.
   const chips = [
     { key: 'nonCustodial' },
     { key: 'noSignup' },
     { key: 'instantDelivery' },
+    { key: 'crossChain' },
   ]
   return (
     <section className="relative min-h-screen lg:min-h-[870px] flex items-center bg-surface dark:bg-surface px-4 sm:px-6 overflow-hidden pt-28 pb-12 lg:py-0 transition-colors duration-300">
@@ -67,17 +72,26 @@ function Hero({ onCryptoChange, cryptoColor }) {
               <MagneticButton onClick={() => navigate('/buy')} className="bg-primary text-on-primary px-8 py-4 rounded-xl font-bold font-[family-name:var(--font-family-display)] text-base sm:text-lg transition-colors hover:bg-primary/90 w-full sm:w-auto">
                 {t('landing.buyNow')}
               </MagneticButton>
-              {/* secondary CTA scrolls to features for new visitors. "View
-                  History" was the previous label but new users have no
-                  history — sending them there leads to an empty state. */}
+              {/* dual primary CTA — swap is a top-level product, not an
+                  add-on. outlined-on-primary style gives it equal visual
+                  weight without two solid fills competing. */}
               <MagneticButton
+                onClick={() => navigate('/swap')}
+                className="border-2 border-primary text-primary bg-transparent px-8 py-4 rounded-xl font-bold font-[family-name:var(--font-family-display)] text-base sm:text-lg hover:bg-primary/10 w-full sm:w-auto transition-colors"
+              >
+                {t('landing.swapNow')}
+              </MagneticButton>
+              {/* "how it works" demoted to text link — scrolls to features
+                  for new visitors who want a peek before committing. */}
+              <button
+                type="button"
                 onClick={() => {
                   document.getElementById('features')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
                 }}
-                className="border border-outline-variant text-on-surface px-8 py-4 rounded-xl font-bold text-base sm:text-lg hover:bg-surface-container-high w-full sm:w-auto transition-colors"
+                className="text-on-surface/70 hover:text-on-surface underline-offset-4 hover:underline text-sm sm:text-base font-semibold transition-colors px-4 py-4 sm:py-0 self-center"
               >
                 {t('landing.howItWorks')}
-              </MagneticButton>
+              </button>
             </div>
           </FadeIn>
 
@@ -108,10 +122,15 @@ function Hero({ onCryptoChange, cryptoColor }) {
 
 function Features() {
   const { t } = useTranslation()
+  // four-card grid since swap landed: noSignup, bestRates, instant,
+  // crossChain. zig-zag offset pattern keeps the same visual rhythm as
+  // the old three-card layout (false/true/false/true). on md (2 cols)
+  // the offset still reads cleanly; on lg (4 cols) it stays subtle.
   const items = [
-    { key: 'noSignup', demo: <NoSignupDemo />, offset: false },
-    { key: 'bestRates', demo: <BestRatesDemo />, offset: true },
-    { key: 'instant', demo: <InstantDemo />, offset: false },
+    { key: 'noSignup',   demo: <NoSignupDemo />,   offset: false },
+    { key: 'bestRates',  demo: <BestRatesDemo />,  offset: true  },
+    { key: 'instant',    demo: <InstantDemo />,    offset: false },
+    { key: 'crossChain', demo: <CrossChainDemo />, offset: true  },
   ]
 
   return (
@@ -123,12 +142,12 @@ function Features() {
         </p>
       </FadeIn>
 
-      <Stagger stagger={0.15} className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
+      <Stagger stagger={0.12} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
         {items.map((item) => (
           <StaggerItem key={item.key} className={item.offset ? 'md:mt-12' : ''}>
-            <HoverCard className="bg-surface-container-low dark:bg-surface-container-lowest p-8 sm:p-10 rounded-xl transition-colors duration-300 focus-within:ring-2 focus-within:ring-primary/20 h-full dark:border dark:border-white/5 relative overflow-hidden">
+            <HoverCard className="bg-surface-container-low dark:bg-surface-container-lowest p-6 sm:p-8 rounded-xl transition-colors duration-300 focus-within:ring-2 focus-within:ring-primary/20 h-full dark:border dark:border-white/5 relative overflow-hidden">
               {item.demo}
-              <h3 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4">{t(`landing.features.${item.key}.title`)}</h3>
+              <h3 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4">{t(`landing.features.${item.key}.title`)}</h3>
               <p className="text-secondary leading-relaxed text-sm sm:text-base">{t(`landing.features.${item.key}.desc`)}</p>
             </HoverCard>
           </StaggerItem>

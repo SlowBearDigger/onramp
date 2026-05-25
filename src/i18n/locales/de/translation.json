@@ -82,11 +82,13 @@
     "titlePart2": "Krypto zu kaufen.",
     "subtitle": "Keine Anmeldung nötig. Vergleichen Sie führende On-Ramp-Anbieter an einem Ort und profitieren Sie von den niedrigsten Gebühren der Branche bei sofortiger Auslieferung direkt in Ihre Wallet.",
     "buyNow": "Jetzt kaufen",
+    "swapNow": "Swap starten",
     "viewHistory": "Verlauf ansehen",
     "chips": {
       "nonCustodial": "Non-Custodial",
       "noSignup": "Keine Anmeldung",
-      "instantDelivery": "Sofortige Lieferung"
+      "instantDelivery": "Sofortige Lieferung",
+      "crossChain": "Cross-Chain"
     },
     "features": {
       "heading": "Auf Einfachheit ausgelegt.",
@@ -102,6 +104,10 @@
       "instant": {
         "title": "Sofortige Lieferung",
         "desc": "Keine Wartezeiten. Sobald die Zahlung bestätigt ist, werden Ihre digitalen Vermögenswerte sofort an Ihre private Wallet versandt."
+      },
+      "crossChain": {
+        "title": "Cross-Chain Swaps",
+        "desc": "Tausche jeden Token zwischen Chains via THORChain, Chainflip und NEAR Intents. Non-Custodial — deine Wallet signiert jede Transaktion."
       }
     },
     "howItWorks": "So funktioniert's"

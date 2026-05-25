@@ -82,11 +82,13 @@
     "titlePart2": "buy crypto.",
     "subtitle": "Skip the signup. Compare top on-ramp providers in one place and get the industry's lowest fees with lightning-fast delivery directly to your wallet.",
     "buyNow": "Buy Now",
+    "swapNow": "Swap Crypto",
     "viewHistory": "View History",
     "chips": {
       "nonCustodial": "Non-Custodial",
       "noSignup": "No Signup",
-      "instantDelivery": "Instant Delivery"
+      "instantDelivery": "Instant Delivery",
+      "crossChain": "Cross-Chain"
     },
     "features": {
       "heading": "Engineered for simplicity.",
@@ -102,6 +104,10 @@
       "instant": {
         "title": "Instant Delivery",
         "desc": "No waiting periods. Once payment is confirmed, your digital assets are dispatched immediately to your private wallet."
+      },
+      "crossChain": {
+        "title": "Cross-Chain Swaps",
+        "desc": "Swap any token across chains via THORChain, Chainflip and NEAR Intents. Non-custodial — your wallet signs every transaction."
       }
     },
     "howItWorks": "How it works"

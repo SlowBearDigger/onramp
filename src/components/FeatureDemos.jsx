@@ -1,5 +1,5 @@
 import { motion, useReducedMotion } from 'motion/react'
-import { CheckCircle, Check, Lightning } from '@phosphor-icons/react'
+import { CheckCircle, Check, Lightning, ArrowRight } from '@phosphor-icons/react'
 
 // no signup demo: signup form fields fade out, replaced by a checkmark
 export function NoSignupDemo() {
@@ -182,6 +182,72 @@ export function BestRatesDemo() {
       >
         Save ~0.7%
       </motion.span>
+    </div>
+  )
+}
+
+// cross-chain swap demo: source chain pill → arrow → target chain pill.
+// arrow pulses, chains alternate (ETH→SOL, then SOL→BASE, then BASE→ETH)
+// to hint at the multi-chain reach. respects prefers-reduced-motion.
+export function CrossChainDemo() {
+  const prefersReduced = useReducedMotion()
+  // three legs of the loop, each highlighted in turn. each pill shows a
+  // dot in the chain brand color so the demo reads even without text.
+  const legs = [
+    { from: 'ETH',  to: 'SOL',  fromColor: '#627EEA', toColor: '#14F195' },
+    { from: 'SOL',  to: 'BASE', fromColor: '#14F195', toColor: '#0052FF' },
+    { from: 'BASE', to: 'ETH',  fromColor: '#0052FF', toColor: '#627EEA' },
+  ]
+  return (
+    <div className="h-24 flex items-center justify-center mb-4 relative">
+      {legs.map((leg, i) => (
+        <motion.div
+          key={`${leg.from}-${leg.to}`}
+          className="absolute inset-0 flex items-center justify-center gap-2"
+          animate={
+            prefersReduced
+              ? { opacity: i === 0 ? 1 : 0 }
+              : {
+                  opacity: [0, 0, 1, 1, 0],
+                }
+          }
+          transition={
+            prefersReduced
+              ? { duration: 0 }
+              : {
+                  duration: 6,
+                  repeat: Infinity,
+                  delay: i * 2,
+                  times: [0, 0.05, 0.15, 0.85, 1],
+                }
+          }
+        >
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-surface-container-high dark:bg-surface-container-high/40 text-[10px] font-bold tracking-wider text-on-surface">
+            <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: leg.fromColor }} aria-hidden="true" />
+            {leg.from}
+          </span>
+          <motion.span
+            className="text-primary inline-flex"
+            animate={
+              prefersReduced
+                ? { x: 0 }
+                : { x: [0, 4, 0] }
+            }
+            transition={
+              prefersReduced
+                ? { duration: 0 }
+                : { duration: 1.2, repeat: Infinity, ease: 'easeInOut' }
+            }
+            aria-hidden="true"
+          >
+            <ArrowRight size={16} weight="bold" />
+          </motion.span>
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-surface-container-high dark:bg-surface-container-high/40 text-[10px] font-bold tracking-wider text-on-surface">
+            <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: leg.toColor }} aria-hidden="true" />
+            {leg.to}
+          </span>
+        </motion.div>
+      ))}
     </div>
   )
 }
