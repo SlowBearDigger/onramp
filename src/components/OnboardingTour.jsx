@@ -45,6 +45,10 @@ export default function OnboardingTour() {
   const [step, setStep] = useState(0)
 
   useEffect(() => {
+    // skip entirely under e2e — the modal's backdrop intercepts clicks
+    // and breaks deterministic interaction tests. set VITE_E2E=true in
+    // the e2e webServer env (see playwright.config.js).
+    if (import.meta.env?.VITE_E2E === 'true') return
     if (!readSeen()) {
       // small delay so the page content paints first, otherwise the
       // modal overlays unstyled content during the first ~200ms.

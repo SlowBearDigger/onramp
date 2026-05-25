@@ -59,6 +59,10 @@ export default defineConfig({
     env: {
       VITE_USE_MOCK: 'false',
       VITE_API_BASE_URL: 'http://127.0.0.1:1',
+      // disables one-time UI surfaces (OnboardingTour, etc.) so their
+      // backdrops don't intercept clicks during e2e flows. component-side
+      // guards opt in via `import.meta.env.VITE_E2E === 'true'`.
+      VITE_E2E: 'true',
     },
   },
 })
