@@ -26,6 +26,9 @@ const SwapPage = lazy(() => import('./pages/SwapPage'))
 // crypto↔crypto swap (SwapKit) lives at /swap. lazy-loaded — its
 // wallet stack (~150KB) is only fetched when the user navigates here.
 const SwapKitPage = lazy(() => import('./pages/SwapKitPage'))
+// "Pay recipient" — collapses the ramp flow into a one-screen payment with
+// the destination pre-filled. lazy like every other app-surface route.
+const PayRecipientPage = lazy(() => import('./pages/PayRecipientPage'))
 const PrivacyPage = lazy(() => import('./pages/PrivacyPage'))
 const TermsPage = lazy(() => import('./pages/TermsPage'))
 const AdminLayout = lazy(() => import('./pages/admin/AdminLayout'))
@@ -52,7 +55,7 @@ function RouteFallback() {
 // they share Sidebar + BottomNav for nav, hide the public marketing
 // Header, and group under one pageKey so AnimatePresence cross-fades
 // only on entering/leaving the app surface (not on internal flips).
-const APP_PATHS = ['/buy', '/sell', '/history', '/swap']
+const APP_PATHS = ['/buy', '/sell', '/history', '/swap', '/pay']
 const isAppPath = (p) => APP_PATHS.some((r) => p === r || p.startsWith(r + '/'))
 
 function AnimatedRoutes() {
@@ -97,6 +100,10 @@ function AnimatedRoutes() {
               <Route path="/history" element={<SwapPage />} />
               {/* crypto ↔ crypto swap surface (SwapKit, non-custodial). */}
               <Route path="/swap" element={<SwapKitPage />} />
+              {/* pay a recipient — ramp flow with the destination pre-filled.
+                  also the landing target for shared payment links
+                  (/pay?to=..&asset=..&currency=..&amount=..&ref=..). */}
+              <Route path="/pay" element={<PayRecipientPage />} />
               {/* legacy redirects — the old /swap path was the ramp Buy view
                   and /swap/sell, /swap/history its siblings. external links
                   (push notifications, customer support) may still target

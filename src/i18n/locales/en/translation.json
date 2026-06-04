@@ -32,6 +32,43 @@
       "signingAs": "Signing as {{address}}"
     }
   },
+  "pay": {
+    "title": "Pay recipient",
+    "subtitle": "Send crypto to anyone in one step",
+    "subtitlePayer": "Confirm and complete this payment",
+    "badge": "preview",
+    "recipientLabel": "Recipient address",
+    "recipientPlaceholder": "Paste the recipient's wallet address",
+    "assetLabel": "They receive",
+    "currencyLabel": "You pay in",
+    "amountLabel": "Amount",
+    "referenceLabel": "Reference (optional)",
+    "referencePlaceholder": "e.g. invoice INV-001",
+    "review": "Review payment",
+    "createLink": "Copy payment link",
+    "linkCopied": "Link copied",
+    "copyManual": "Copy this payment link:",
+    "footnote": "Non-custodial. A regulated provider collects the payment and delivers the crypto straight to the recipient — we never hold funds. Crypto transfers are final.",
+    "errors": {
+      "format": "Enter a valid {{network}} address",
+      "checksum": "This address looks mistyped — its checksum failed",
+      "unchecked": "We can't fully verify this {{network}} address format — double-check it carefully"
+    },
+    "confirm": {
+      "recipientHeading": "Paying to",
+      "checksumOk": "Address checksum verified",
+      "theyReceive": "They receive",
+      "youPay": "You pay",
+      "reference": "Reference",
+      "referenceNote": "Shown here for your tracking. It may not appear on-chain.",
+      "irreversible": "Crypto payments are final and irreversible. Make sure the address and amount are correct before continuing.",
+      "verifyCheckbox": "I've checked the recipient address is correct.",
+      "saveTrusted": "Save as trusted recipient",
+      "nicknamePlaceholder": "Nickname (e.g. Acme Studio)",
+      "alreadyTrusted": "Saved as a trusted recipient",
+      "payNow": "Pay {{amount}}"
+    }
+  },
   "wallet": {
     "connect": "Connect",
     "disabled": "Wallet disabled — config missing",

@@ -24,6 +24,43 @@
       "signingAs": "Signature en tant que {{address}}"
     }
   },
+  "pay": {
+    "title": "Payer un destinataire",
+    "subtitle": "Envoyez de la crypto à qui vous voulez en une étape",
+    "subtitlePayer": "Confirmez et finalisez ce paiement",
+    "badge": "aperçu",
+    "recipientLabel": "Adresse du destinataire",
+    "recipientPlaceholder": "Collez l'adresse wallet du destinataire",
+    "assetLabel": "Il reçoit",
+    "currencyLabel": "Vous payez en",
+    "amountLabel": "Montant",
+    "referenceLabel": "Référence (facultatif)",
+    "referencePlaceholder": "ex. facture INV-001",
+    "review": "Vérifier le paiement",
+    "createLink": "Copier le lien de paiement",
+    "linkCopied": "Lien copié",
+    "copyManual": "Copiez ce lien de paiement :",
+    "footnote": "Non-custodial. Un prestataire réglementé encaisse le paiement et livre la crypto directement au destinataire — nous ne détenons jamais les fonds. Les transferts crypto sont définitifs.",
+    "errors": {
+      "format": "Saisissez une adresse {{network}} valide",
+      "checksum": "Cette adresse semble mal saisie — son checksum a échoué",
+      "unchecked": "Nous ne pouvons pas vérifier entièrement le format de cette adresse {{network}} — vérifiez-la attentivement"
+    },
+    "confirm": {
+      "recipientHeading": "Paiement à",
+      "checksumOk": "Checksum de l'adresse vérifié",
+      "theyReceive": "Il reçoit",
+      "youPay": "Vous payez",
+      "reference": "Référence",
+      "referenceNote": "Affichée ici pour votre suivi. Peut ne pas apparaître on-chain.",
+      "irreversible": "Les paiements crypto sont définitifs et irréversibles. Vérifiez l'adresse et le montant avant de continuer.",
+      "verifyCheckbox": "J'ai vérifié que l'adresse du destinataire est correcte.",
+      "saveTrusted": "Enregistrer comme destinataire de confiance",
+      "nicknamePlaceholder": "Surnom (ex. Acme Studio)",
+      "alreadyTrusted": "Enregistré comme destinataire de confiance",
+      "payNow": "Payer {{amount}}"
+    }
+  },
   "wallet": {
     "connect": "Connecter",
     "disabled": "Wallet désactivé — config manquante",

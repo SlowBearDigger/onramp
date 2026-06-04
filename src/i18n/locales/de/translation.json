@@ -24,6 +24,43 @@
       "signingAs": "Signiere als {{address}}"
     }
   },
+  "pay": {
+    "title": "Empfänger bezahlen",
+    "subtitle": "Sende Krypto an jeden in einem Schritt",
+    "subtitlePayer": "Diese Zahlung bestätigen und abschließen",
+    "badge": "Vorschau",
+    "recipientLabel": "Empfängeradresse",
+    "recipientPlaceholder": "Wallet-Adresse des Empfängers einfügen",
+    "assetLabel": "Erhält",
+    "currencyLabel": "Du zahlst in",
+    "amountLabel": "Betrag",
+    "referenceLabel": "Referenz (optional)",
+    "referencePlaceholder": "z. B. Rechnung INV-001",
+    "review": "Zahlung prüfen",
+    "createLink": "Zahlungslink kopieren",
+    "linkCopied": "Link kopiert",
+    "copyManual": "Diesen Zahlungslink kopieren:",
+    "footnote": "Non-Custodial. Ein regulierter Anbieter zieht die Zahlung ein und liefert die Krypto direkt an den Empfänger — wir halten niemals Gelder. Krypto-Überweisungen sind endgültig.",
+    "errors": {
+      "format": "Gib eine gültige {{network}}-Adresse ein",
+      "checksum": "Diese Adresse sieht vertippt aus — die Prüfsumme ist fehlgeschlagen",
+      "unchecked": "Wir können das Format dieser {{network}}-Adresse nicht vollständig prüfen — überprüfe sie sorgfältig"
+    },
+    "confirm": {
+      "recipientHeading": "Zahlung an",
+      "checksumOk": "Adressprüfsumme verifiziert",
+      "theyReceive": "Erhält",
+      "youPay": "Du zahlst",
+      "reference": "Referenz",
+      "referenceNote": "Hier zur Nachverfolgung angezeigt. Erscheint evtl. nicht on-chain.",
+      "irreversible": "Krypto-Zahlungen sind endgültig und unwiderruflich. Stelle sicher, dass Adresse und Betrag korrekt sind, bevor du fortfährst.",
+      "verifyCheckbox": "Ich habe geprüft, dass die Empfängeradresse korrekt ist.",
+      "saveTrusted": "Als vertrauenswürdigen Empfänger speichern",
+      "nicknamePlaceholder": "Spitzname (z. B. Acme Studio)",
+      "alreadyTrusted": "Als vertrauenswürdiger Empfänger gespeichert",
+      "payNow": "{{amount}} zahlen"
+    }
+  },
   "wallet": {
     "connect": "Verbinden",
     "disabled": "Wallet deaktiviert — Konfig fehlt",

@@ -24,6 +24,43 @@
       "signingAs": "Firmando como {{address}}"
     }
   },
+  "pay": {
+    "title": "Pagar a destinatario",
+    "subtitle": "Envía cripto a cualquiera en un paso",
+    "subtitlePayer": "Confirma y completa este pago",
+    "badge": "preview",
+    "recipientLabel": "Dirección del destinatario",
+    "recipientPlaceholder": "Pegá la dirección de wallet del destinatario",
+    "assetLabel": "Recibe",
+    "currencyLabel": "Pagás en",
+    "amountLabel": "Monto",
+    "referenceLabel": "Referencia (opcional)",
+    "referencePlaceholder": "ej. factura INV-001",
+    "review": "Revisar pago",
+    "createLink": "Copiar enlace de pago",
+    "linkCopied": "Enlace copiado",
+    "copyManual": "Copiá este enlace de pago:",
+    "footnote": "Non-custodial. Un proveedor regulado cobra el pago y entrega la cripto directo al destinatario — nosotros nunca tocamos los fondos. Las transferencias cripto son finales.",
+    "errors": {
+      "format": "Ingresá una dirección {{network}} válida",
+      "checksum": "Esta dirección parece mal tipeada — el checksum falló",
+      "unchecked": "No podemos verificar del todo el formato de esta dirección {{network}} — revisala con cuidado"
+    },
+    "confirm": {
+      "recipientHeading": "Pagando a",
+      "checksumOk": "Checksum de la dirección verificado",
+      "theyReceive": "Recibe",
+      "youPay": "Pagás",
+      "reference": "Referencia",
+      "referenceNote": "Se muestra acá para tu seguimiento. Puede no aparecer on-chain.",
+      "irreversible": "Los pagos cripto son finales e irreversibles. Asegurate de que la dirección y el monto sean correctos antes de continuar.",
+      "verifyCheckbox": "Verifiqué que la dirección del destinatario es correcta.",
+      "saveTrusted": "Guardar como destinatario de confianza",
+      "nicknamePlaceholder": "Apodo (ej. Acme Studio)",
+      "alreadyTrusted": "Guardado como destinatario de confianza",
+      "payNow": "Pagar {{amount}}"
+    }
+  },
   "wallet": {
     "connect": "Conectar",
     "disabled": "Wallet deshabilitada — falta configuración",
