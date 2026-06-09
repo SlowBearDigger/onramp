@@ -10,6 +10,7 @@ import { FIAT_OPTIONS, PAYMENT_METHODS } from '../config/cryptos'
 import { useLiveTicker } from '../hooks/useLiveTicker'
 import { useProvider } from '../hooks/useProvider'
 import { listProviderMetadata } from '../providers/index.js'
+import { toTransakNetwork } from '../providers/transak/index.js'
 import TransactionFlow from './TransactionFlow'
 import ProviderModal from './ProviderModal'
 import ProviderComparison, { assignBadges } from './ProviderComparison'
@@ -333,7 +334,9 @@ export default function SwapWidget({ onCryptoChange, mode = 'buy', onViewHistory
     const side = isSell ? 'SELL' : 'BUY'
 
     Promise.allSettled([
-      fetchQuote('transak', { fiat: requestedFiat, crypto: cryptoSymbol, network: cryptoNetwork, side, amount: requestedAmount }),
+      // transak's pricing api has its own network ids (BTC lives on
+      // "mainnet", not "bitcoin") — translate or the quote 400s.
+      fetchQuote('transak', { fiat: requestedFiat, crypto: cryptoSymbol, network: toTransakNetwork(cryptoNetwork), side, amount: requestedAmount }),
       fetchQuote('mtpelerin', { fiat: requestedFiat, crypto: cryptoSymbol, network: cryptoNetwork, side, amount: requestedAmount }),
       fetchQuote('topper', { fiat: requestedFiat, crypto: cryptoSymbol, network: cryptoNetwork, side, amount: requestedAmount }),
     ]).then((results) => {
