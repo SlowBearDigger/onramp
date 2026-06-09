@@ -45,6 +45,7 @@ export async function fetchPartnerOrders({ walletAddress, limit = 50 }) {
       headers: {
         accept: 'application/json',
         'access-token': token,
+        'user-agent': 'onramp-backend/1.0 (+https://github.com/SlowBearDigger/onramp)',
       },
       signal: ac.signal,
       redirect: 'error',

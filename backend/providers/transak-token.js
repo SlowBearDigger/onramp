@@ -59,6 +59,9 @@ async function mintAccessToken() {
         accept: 'application/json',
         'api-secret': apiSecret,
         'content-type': 'application/json',
+        // descriptive UA — transak sits behind cloudflare bot filtering and
+        // generic runtime UAs have triggered 1010 blocks in testing.
+        'user-agent': 'onramp-backend/1.0 (+https://github.com/SlowBearDigger/onramp)',
       },
       body: JSON.stringify({ apiKey }),
       signal: ac.signal,
@@ -87,17 +90,38 @@ async function mintAccessToken() {
 }
 
 // returns a valid access token. uses the cached one when fresh; refreshes
-// when missing or within REFRESH_BEFORE_EXPIRY of the cutoff. if the
-// explicit override env var is set, returns it verbatim.
+// when missing or within REFRESH_BEFORE_EXPIRY of the cutoff.
+//
+// precedence (changed 2026-06): when api key + secret are configured we
+// ALWAYS prefer minting — a fresh 7-day token can't go stale. the explicit
+// TRANSAK_PARTNER_ACCESS_TOKEN override is now a FALLBACK, used when the
+// secret is absent or minting fails (secret rotated mid-incident). the old
+// override-first order had a footgun: a forgotten override env var with an
+// expired token silently broke every authed call even though valid
+// long-lived creds sat right next to it.
 export async function getValidAccessToken() {
   const override = process.env.TRANSAK_PARTNER_ACCESS_TOKEN
-  if (override) return override
+  const canMint = process.env.TRANSAK_API_KEY && process.env.TRANSAK_API_SECRET
+
+  if (!canMint) {
+    if (override) return override
+    // fall through — mintAccessToken throws the canonical not_configured.
+    return mintAccessToken()
+  }
 
   const now = Math.floor(Date.now() / 1000)
   if (cached && cached.expiresAt - now > REFRESH_BEFORE_EXPIRY_SECONDS) {
     return cached.token
   }
-  return mintAccessToken()
+  try {
+    return await mintAccessToken()
+  } catch (err) {
+    if (override) {
+      console.warn('[transak-token] mint failed (%s) — falling back to TRANSAK_PARTNER_ACCESS_TOKEN override', err?.code || err?.message)
+      return override
+    }
+    throw err
+  }
 }
 
 // for tests / emergency.
