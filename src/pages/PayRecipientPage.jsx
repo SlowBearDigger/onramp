@@ -1,10 +1,10 @@
-import { useState, useMemo, useRef, useEffect } from 'react'
+import { useState, useMemo, useRef, lazy, Suspense } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from 'motion/react'
 import {
   PaperPlaneTilt, Link as LinkIcon, Check, Warning, ShieldCheck,
-  CaretDown, Star,
+  CaretDown, Star, QrCode, CircleNotch, X,
 } from '@phosphor-icons/react'
 import Sidebar from '../components/Sidebar'
 import BottomNav from '../components/BottomNav'
@@ -34,6 +34,10 @@ import { getOnColor } from '../utils/contrast'
 
 const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true'
 
+// QR renderer is lazy — qr-code-styling is ~50KB and only needed when a
+// link creator actually opens the QR panel, never on the payer path.
+const PayQr = lazy(() => import('../components/PayQr'))
+
 // deep-link params for the payer side. a freelancer shares
 //   /pay?to=0x..&asset=USDC&currency=EUR&amount=100&ref=INV-001
 // and the client lands here with everything pre-filled.
@@ -50,11 +54,6 @@ function resolveAmount(searchParams) {
   if (Number.isFinite(n) && n > 0 && n <= 100_000) return String(Math.round(n * 100) / 100)
   return ''
 }
-function resolveReference(searchParams) {
-  const ref = (searchParams.get('ref') || '').trim()
-  // keep references short and printable — they're shown back verbatim.
-  return ref.slice(0, 64)
-}
 
 export default function PayRecipientPage() {
   const { t } = useTranslation()
@@ -69,7 +68,6 @@ export default function PayRecipientPage() {
   const [asset, setAsset] = useState(() => resolveAsset(searchParams))
   const [fiat, setFiat] = useState(() => resolveFiat(searchParams))
   const [amount, setAmount] = useState(() => resolveAmount(searchParams))
-  const [reference, setReference] = useState(() => resolveReference(searchParams))
   const [showAssetMenu, setShowAssetMenu] = useState(false)
   const [showFiatMenu, setShowFiatMenu] = useState(false)
 
@@ -174,8 +172,6 @@ export default function PayRecipientPage() {
                       setShowFiatMenu={setShowFiatMenu}
                       amount={amount}
                       onAmount={setAmount}
-                      reference={reference}
-                      onReference={setReference}
                       trusted={trusted}
                       isPayerLink={isPayerLink}
                       canContinue={canContinue}
@@ -198,7 +194,6 @@ export default function PayRecipientPage() {
                       asset={asset}
                       fiat={fiat}
                       amount={amount}
-                      reference={reference}
                       verified={verified}
                       onVerifiedChange={setVerified}
                       trusted={trusted}
@@ -261,7 +256,7 @@ function PayForm({
   recipient, onRecipient, recipientTouched, onRecipientBlur, validation,
   asset, onAsset, showAssetMenu, setShowAssetMenu,
   fiat, onFiat, showFiatMenu, setShowFiatMenu,
-  amount, onAmount, reference, onReference,
+  amount, onAmount,
   trusted, isPayerLink, canContinue, onContinue,
 }) {
   const { t } = useTranslation()
@@ -459,22 +454,6 @@ function PayForm({
         </div>
       </StaggerItem>
 
-      {/* optional reference */}
-      <StaggerItem className="space-y-1.5">
-        <label htmlFor="pay-reference" className="text-[11px] font-bold tracking-widest text-secondary uppercase ml-1">
-          {t('pay.referenceLabel')}
-        </label>
-        <input
-          id="pay-reference"
-          className="w-full bg-surface-container-low/80 dark:bg-surface-container-high/40 border border-transparent p-3 rounded-xl text-sm text-on-surface focus:ring-0 focus:outline-none focus-visible:border-primary/40 placeholder:text-secondary/40"
-          placeholder={t('pay.referencePlaceholder')}
-          type="text"
-          maxLength={64}
-          value={reference}
-          onChange={(e) => onReference(e.target.value)}
-        />
-      </StaggerItem>
-
       {/* primary action */}
       <StaggerItem>
         <MagneticButton
@@ -487,36 +466,38 @@ function PayForm({
         </MagneticButton>
       </StaggerItem>
 
-      {/* shareable link (create mode) */}
+      {/* shareable link + QR (create mode) */}
       {!isPayerLink && (
         <StaggerItem>
-          <ShareLinkRow recipient={recipient} asset={asset} fiat={fiat} amount={amount} reference={reference} canShare={canContinue} />
+          <ShareLinkRow recipient={recipient} asset={asset} fiat={fiat} amount={amount} canShare={canContinue} />
         </StaggerItem>
       )}
     </Stagger>
   )
 }
 
-// builds /pay?to=..&asset=..&currency=..&amount=..&ref=.. against the current
-// origin + router base. used by the freelancer to send a prefilled link.
-function buildPayLink({ recipient, asset, fiat, amount, reference }) {
+// builds /pay?to=..&asset=..&currency=..&amount=.. against the current
+// origin + router base. used by the freelancer/store to send a prefilled
+// link or render it as a QR at point of sale.
+function buildPayLink({ recipient, asset, fiat, amount }) {
   const base = `${window.location.origin}${import.meta.env.BASE_URL || '/'}`.replace(/\/$/, '')
   const qs = new URLSearchParams()
   qs.set('to', recipient.trim())
   qs.set('asset', asset.symbol)
   qs.set('currency', fiat.code)
   if (parseFloat(amount) > 0) qs.set('amount', String(parseFloat(amount)))
-  if (reference.trim()) qs.set('ref', reference.trim())
   return `${base}/pay?${qs.toString()}`
 }
 
-function ShareLinkRow({ recipient, asset, fiat, amount, reference, canShare }) {
+function ShareLinkRow({ recipient, asset, fiat, amount, canShare }) {
   const { t } = useTranslation()
   const [copied, setCopied] = useState(false)
+  const [qrOpen, setQrOpen] = useState(false)
+
+  const url = canShare ? buildPayLink({ recipient, asset, fiat, amount }) : null
 
   const copy = async () => {
-    if (!canShare) return
-    const url = buildPayLink({ recipient, asset, fiat, amount, reference })
+    if (!url) return
     try {
       await navigator.clipboard.writeText(url)
       setCopied(true)
@@ -528,28 +509,97 @@ function ShareLinkRow({ recipient, asset, fiat, amount, reference, canShare }) {
     }
   }
 
+  const shareClasses = (enabled) =>
+    `flex items-center justify-center gap-2 py-3 rounded-xl border border-dashed text-sm font-bold transition-colors ${
+      enabled
+        ? 'border-primary/40 text-primary hover:bg-primary/5'
+        : 'border-outline-variant/30 text-secondary/50 cursor-not-allowed'
+    }`
+
   return (
-    <button
-      type="button"
-      onClick={copy}
-      aria-disabled={!canShare}
-      className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-dashed text-sm font-bold transition-colors ${
-        canShare
-          ? 'border-primary/40 text-primary hover:bg-primary/5'
-          : 'border-outline-variant/30 text-secondary/50 cursor-not-allowed'
-      }`}
-    >
-      {copied ? (
-        <><Check size={16} weight="bold" aria-hidden="true" /> {t('pay.linkCopied')}</>
-      ) : (
-        <><LinkIcon size={16} weight="bold" aria-hidden="true" /> {t('pay.createLink')}</>
-      )}
-    </button>
+    <>
+      <div className="grid grid-cols-[1fr_auto] gap-2">
+        <button type="button" onClick={copy} aria-disabled={!canShare} className={shareClasses(canShare)}>
+          {copied ? (
+            <><Check size={16} weight="bold" aria-hidden="true" /> {t('pay.linkCopied')}</>
+          ) : (
+            <><LinkIcon size={16} weight="bold" aria-hidden="true" /> {t('pay.createLink')}</>
+          )}
+        </button>
+        <button
+          type="button"
+          onClick={() => canShare && setQrOpen(true)}
+          aria-disabled={!canShare}
+          aria-label={t('pay.qr.open')}
+          title={t('pay.qr.open')}
+          className={`${shareClasses(canShare)} px-4`}
+        >
+          <QrCode size={18} weight="bold" aria-hidden="true" />
+        </button>
+      </div>
+      <AnimatePresence>
+        {qrOpen && url && (
+          <PayQrModal
+            url={url}
+            footerText={t('pay.qr.footer', { amount: `${fiat.symbol}${amount} ${fiat.code}`, asset: asset.symbol })}
+            onClose={() => setQrOpen(false)}
+          />
+        )}
+      </AnimatePresence>
+    </>
+  )
+}
+
+// centered overlay hosting the lazy QR. backdrop click or X dismisses.
+function PayQrModal({ url, footerText, onClose }) {
+  const { t } = useTranslation()
+  return (
+    <>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.18 }}
+        onClick={onClose}
+        aria-hidden="true"
+        className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[80]"
+      />
+      <motion.div
+        role="dialog"
+        aria-label={t('pay.qr.title')}
+        initial={{ opacity: 0, y: 24, scale: 0.96 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: 24, scale: 0.96 }}
+        transition={{ type: 'spring', stiffness: 280, damping: 26 }}
+        className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[90] w-[min(calc(100vw-1.5rem),22rem)] bg-surface-container-lowest dark:bg-surface-container rounded-2xl shadow-2xl shadow-black/20 dark:shadow-black/60 border border-outline-variant/15 dark:border-white/10 p-6"
+      >
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-base font-bold text-on-surface font-[family-name:var(--font-family-display)] m-0">
+            {t('pay.qr.title')}
+          </h2>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label={t('common.close')}
+            className="text-secondary hover:text-on-surface transition-colors p-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded"
+          >
+            <X size={14} weight="bold" aria-hidden="true" />
+          </button>
+        </div>
+        <Suspense fallback={
+          <div role="status" className="h-[240px] flex items-center justify-center text-secondary">
+            <CircleNotch size={20} weight="bold" className="animate-spin" aria-hidden="true" />
+          </div>
+        }>
+          <PayQr url={url} footerText={footerText} />
+        </Suspense>
+      </motion.div>
+    </>
   )
 }
 
 function ConfirmCard({
-  recipient, validation, asset, fiat, amount, reference,
+  recipient, validation, asset, fiat, amount,
   verified, onVerifiedChange, trusted, onBack, onPay,
 }) {
   const { t } = useTranslation()
@@ -600,13 +650,6 @@ function ConfirmCard({
           </div>
         </div>
 
-        {reference.trim() && (
-          <div className="pt-3 border-t border-outline-variant/10 dark:border-white/5">
-            <p className="text-[10px] uppercase tracking-widest text-secondary font-bold mb-0.5">{t('pay.confirm.reference')}</p>
-            <p className="text-sm text-on-surface break-words">{reference}</p>
-            <p className="text-[10px] text-secondary/80 mt-1">{t('pay.confirm.referenceNote')}</p>
-          </div>
-        )}
       </div>
 
       {/* irreversible warning */}

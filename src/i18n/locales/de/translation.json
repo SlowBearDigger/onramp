@@ -34,12 +34,16 @@
     "assetLabel": "Erhält",
     "currencyLabel": "Du zahlst in",
     "amountLabel": "Betrag",
-    "referenceLabel": "Referenz (optional)",
-    "referencePlaceholder": "z. B. Rechnung INV-001",
     "review": "Zahlung prüfen",
     "createLink": "Zahlungslink kopieren",
     "linkCopied": "Link kopiert",
     "copyManual": "Diesen Zahlungslink kopieren:",
+    "qr": {
+      "open": "QR-Code anzeigen",
+      "title": "Zahlungs-QR",
+      "footer": "Scannen öffnet die vorausgefüllte Zahlung über {{amount}} in {{asset}}.",
+      "aria": "QR-Code mit diesem Zahlungslink"
+    },
     "footnote": "Non-Custodial. Ein regulierter Anbieter zieht die Zahlung ein und liefert die Krypto direkt an den Empfänger — wir halten niemals Gelder. Krypto-Überweisungen sind endgültig.",
     "errors": {
       "format": "Gib eine gültige {{network}}-Adresse ein",
@@ -51,8 +55,6 @@
       "checksumOk": "Adressprüfsumme verifiziert",
       "theyReceive": "Erhält",
       "youPay": "Du zahlst",
-      "reference": "Referenz",
-      "referenceNote": "Hier zur Nachverfolgung angezeigt. Erscheint evtl. nicht on-chain.",
       "irreversible": "Krypto-Zahlungen sind endgültig und unwiderruflich. Stelle sicher, dass Adresse und Betrag korrekt sind, bevor du fortfährst.",
       "verifyCheckbox": "Ich habe geprüft, dass die Empfängeradresse korrekt ist.",
       "saveTrusted": "Als vertrauenswürdigen Empfänger speichern",

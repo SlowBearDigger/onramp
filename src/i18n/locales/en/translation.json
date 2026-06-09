@@ -42,12 +42,16 @@
     "assetLabel": "They receive",
     "currencyLabel": "You pay in",
     "amountLabel": "Amount",
-    "referenceLabel": "Reference (optional)",
-    "referencePlaceholder": "e.g. invoice INV-001",
     "review": "Review payment",
     "createLink": "Copy payment link",
     "linkCopied": "Link copied",
     "copyManual": "Copy this payment link:",
+    "qr": {
+      "open": "Show QR code",
+      "title": "Payment QR",
+      "footer": "Scanning opens the prefilled payment for {{amount}} in {{asset}}.",
+      "aria": "QR code encoding this payment link"
+    },
     "footnote": "Non-custodial. A regulated provider collects the payment and delivers the crypto straight to the recipient — we never hold funds. Crypto transfers are final.",
     "errors": {
       "format": "Enter a valid {{network}} address",
@@ -59,8 +63,6 @@
       "checksumOk": "Address checksum verified",
       "theyReceive": "They receive",
       "youPay": "You pay",
-      "reference": "Reference",
-      "referenceNote": "Shown here for your tracking. It may not appear on-chain.",
       "irreversible": "Crypto payments are final and irreversible. Make sure the address and amount are correct before continuing.",
       "verifyCheckbox": "I've checked the recipient address is correct.",
       "saveTrusted": "Save as trusted recipient",

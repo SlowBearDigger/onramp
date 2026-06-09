@@ -34,12 +34,16 @@
     "assetLabel": "Il reçoit",
     "currencyLabel": "Vous payez en",
     "amountLabel": "Montant",
-    "referenceLabel": "Référence (facultatif)",
-    "referencePlaceholder": "ex. facture INV-001",
     "review": "Vérifier le paiement",
     "createLink": "Copier le lien de paiement",
     "linkCopied": "Lien copié",
     "copyManual": "Copiez ce lien de paiement :",
+    "qr": {
+      "open": "Afficher le code QR",
+      "title": "QR de paiement",
+      "footer": "Scanner ouvre le paiement prérempli de {{amount}} en {{asset}}.",
+      "aria": "Code QR contenant ce lien de paiement"
+    },
     "footnote": "Non-custodial. Un prestataire réglementé encaisse le paiement et livre la crypto directement au destinataire — nous ne détenons jamais les fonds. Les transferts crypto sont définitifs.",
     "errors": {
       "format": "Saisissez une adresse {{network}} valide",
@@ -51,8 +55,6 @@
       "checksumOk": "Checksum de l'adresse vérifié",
       "theyReceive": "Il reçoit",
       "youPay": "Vous payez",
-      "reference": "Référence",
-      "referenceNote": "Affichée ici pour votre suivi. Peut ne pas apparaître on-chain.",
       "irreversible": "Les paiements crypto sont définitifs et irréversibles. Vérifiez l'adresse et le montant avant de continuer.",
       "verifyCheckbox": "J'ai vérifié que l'adresse du destinataire est correcte.",
       "saveTrusted": "Enregistrer comme destinataire de confiance",

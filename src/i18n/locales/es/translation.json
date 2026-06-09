@@ -34,12 +34,16 @@
     "assetLabel": "Recibe",
     "currencyLabel": "Pagás en",
     "amountLabel": "Monto",
-    "referenceLabel": "Referencia (opcional)",
-    "referencePlaceholder": "ej. factura INV-001",
     "review": "Revisar pago",
     "createLink": "Copiar enlace de pago",
     "linkCopied": "Enlace copiado",
     "copyManual": "Copiá este enlace de pago:",
+    "qr": {
+      "open": "Mostrar código QR",
+      "title": "QR de pago",
+      "footer": "Escanear abre el pago prellenado de {{amount}} en {{asset}}.",
+      "aria": "Código QR con este enlace de pago"
+    },
     "footnote": "Non-custodial. Un proveedor regulado cobra el pago y entrega la cripto directo al destinatario — nosotros nunca tocamos los fondos. Las transferencias cripto son finales.",
     "errors": {
       "format": "Ingresá una dirección {{network}} válida",
@@ -51,8 +55,6 @@
       "checksumOk": "Checksum de la dirección verificado",
       "theyReceive": "Recibe",
       "youPay": "Pagás",
-      "reference": "Referencia",
-      "referenceNote": "Se muestra acá para tu seguimiento. Puede no aparecer on-chain.",
       "irreversible": "Los pagos cripto son finales e irreversibles. Asegurate de que la dirección y el monto sean correctos antes de continuar.",
       "verifyCheckbox": "Verifiqué que la dirección del destinatario es correcta.",
       "saveTrusted": "Guardar como destinatario de confianza",
