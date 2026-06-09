@@ -110,6 +110,12 @@ export function useOrders({ customerId } = {}) {
   const [isPolling, setIsPolling] = useState(false)
   const timerRef = useRef(null)
   const abortRef = useRef(null)
+  // wallet we already ran the partner-api sync for. the first fetch per
+  // wallet goes through /api/profile/orders (backend reconciles against
+  // transak's partner api, then returns the merged view); every poll after
+  // that stays on the local-only /api/orders so we never burn upstream
+  // quota in the 5s loop.
+  const syncedForRef = useRef(null)
 
   const fetchOnce = useCallback(async () => {
     if (USE_MOCK) {
@@ -135,8 +141,23 @@ export function useOrders({ customerId } = {}) {
 
     setState((s) => (s === 'ready' ? 'ready' : 'loading'))
     try {
-      const qs = `?customerId=${encodeURIComponent(effectiveCustomerId)}`
-      const r = await fetch(`${API_BASE}/api/orders${qs}`, { signal: ac.signal })
+      const wantSync = syncedForRef.current !== effectiveCustomerId
+      let r
+      if (wantSync) {
+        r = await fetch(
+          `${API_BASE}/api/profile/orders?walletAddress=${encodeURIComponent(effectiveCustomerId)}`,
+          { signal: ac.signal },
+        )
+        // mark synced even when the upstream reconciliation was partial —
+        // the endpoint degrades to the local view by itself. only a hard
+        // failure (rate limit, network, old backend without the route)
+        // falls through to the plain orders endpoint below.
+        if (r.ok) syncedForRef.current = effectiveCustomerId
+      }
+      if (!wantSync || !r.ok) {
+        const qs = `?customerId=${encodeURIComponent(effectiveCustomerId)}`
+        r = await fetch(`${API_BASE}/api/orders${qs}`, { signal: ac.signal })
+      }
       if (!r.ok) throw new Error(`HTTP ${r.status}`)
       const body = await r.json()
       const mapped = (body.orders || []).map(toUiShape)

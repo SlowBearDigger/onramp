@@ -5,6 +5,7 @@ import helmet from 'helmet'
 import rateLimit from 'express-rate-limit'
 
 import { upsertOrder, listOrders, getOrderById } from './db.js'
+import { fetchPartnerOrders, partnerOrderToRow } from './providers/transak-orders.js'
 import {
   verifyOrderWebhook as verifyTransakWebhook,
   webhookToOrderRow as transakWebhookToRow,
@@ -132,6 +133,9 @@ const webhookLimiter = rateLimit({ windowMs: 60_000, max: 60, standardHeaders: t
 const widgetUrlLimiter = rateLimit({ windowMs: 60_000, max: 10, standardHeaders: true, legacyHeaders: false })
 const pushSubscribeLimiter = rateLimit({ windowMs: 60_000, max: 10, standardHeaders: true, legacyHeaders: false })
 const mtpelerinEventLimiter = rateLimit({ windowMs: 60_000, max: 10, standardHeaders: true, legacyHeaders: false })
+// profile sync spends transak partner-api quota on every call — keep it
+// tighter than the local-only endpoints.
+const profileSyncLimiter = rateLimit({ windowMs: 60_000, max: 6, standardHeaders: true, legacyHeaders: false })
 
 // topper webhook needs the RAW body (the detached JWS signs the bytes
 // verbatim). mount it BEFORE express.json so req.body is a Buffer here.
@@ -190,6 +194,43 @@ app.get('/api/orders', apiLimiter, (req, res) => {
   }
   const orders = listOrders({ customerId, provider })
   res.json({ orders })
+})
+
+// on-demand reconciliation against transak's partner orders api: pull
+// COMPLETED orders for this wallet, upsert them locally (backfills anything
+// webhooks missed and promotes unverified rows), then return the merged
+// local view. powers the in-app "your history" without leaving the site.
+//
+// the frontend should call this on history-view open, not in a poll loop —
+// polling stays on /api/orders, which never touches the upstream.
+app.get('/api/profile/orders', profileSyncLimiter, async (req, res) => {
+  const walletAddress = typeof req.query.walletAddress === 'string' ? req.query.walletAddress : ''
+  if (!CUSTOMER_ID_RE.test(walletAddress)) {
+    return res.status(400).json({ error: 'invalid_walletAddress' })
+  }
+
+  let synced = 0
+  let syncError = null
+  try {
+    const partnerOrders = await fetchPartnerOrders({ walletAddress })
+    for (const order of partnerOrders) {
+      const row = partnerOrderToRow(order)
+      if (row) {
+        upsertOrder(row)
+        synced++
+      }
+    }
+  } catch (err) {
+    // degrade gracefully: a partner-api hiccup must not blank the user's
+    // history. return the local view and flag that the sync was partial.
+    console.error('[profile] partner orders sync failed:', err?.message)
+    syncError = err?.code === 'not_configured' ? 'not_configured'
+      : err?.code === 'auth_failed' ? 'auth_failed'
+      : 'upstream_error'
+  }
+
+  const orders = listOrders({ customerId: walletAddress })
+  res.json({ orders, sync: syncError ? { ok: false, reason: syncError } : { ok: true, synced } })
 })
 
 app.get('/api/orders/:id', apiLimiter, (req, res) => {
