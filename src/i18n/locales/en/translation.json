@@ -152,9 +152,10 @@
       "walletRequired": "Please provide a valid {{network}} address to continue",
       "payoutRequired": "Enter where to receive your funds"
     },
-    "providersHint": "We'll compare {{count}} providers for you on the next step",
+    "providersHint": "Powered by Transak — verify once, skip KYC on your next purchase",
+    "compareLink": "Compare {{count}} providers instead",
     "cta": {
-      "continue": "Continue — compare providers",
+      "continue": "Continue",
       "needAmountAndPayout": "Enter amount and payout address",
       "needWallet": "Enter a wallet address to continue"
     },

@@ -233,10 +233,24 @@ export default function SwapWidget({ onCryptoChange, mode = 'buy', onViewHistory
   // 503, and the modal handles it gracefully.
   const liveMode = !USE_MOCK
 
+  // hybrid ramp flow: the primary CTA goes straight to Transak (their
+  // KYC-once model means returning users skip verification — the single
+  // best conversion lever we have). the three-way comparison is still one
+  // tap away via the "compare providers" text link below the CTA, so
+  // power users lose nothing. equal-weight provider choice created
+  // decision paralysis without enough upside (client call, 2026-06).
   const handleSubmit = () => {
     if (!canSubmit) {
       // mark wallet as touched so the error message becomes visible if the
       // user clicked Continue without filling it.
+      if (!wallet) setWalletTouched(true)
+      return
+    }
+    handlePickProvider('transak')
+  }
+
+  const handleCompare = () => {
+    if (!canSubmit) {
       if (!wallet) setWalletTouched(true)
       return
     }
@@ -681,7 +695,8 @@ export default function SwapWidget({ onCryptoChange, mode = 'buy', onViewHistory
                     </AnimatePresence>
                   </StaggerItem>
 
-                  {/* CTA: opens provider comparison stage */}
+                  {/* CTA: straight to Transak (hybrid default). the compare
+                      link below opens the three-provider comparison. */}
                   <StaggerItem>
                     <MagneticButton
                       onClick={handleSubmit}
@@ -692,6 +707,20 @@ export default function SwapWidget({ onCryptoChange, mode = 'buy', onViewHistory
                     >
                       {t('swap.cta.continue')}
                     </MagneticButton>
+                    <div className="mt-2.5 text-center">
+                      <button
+                        type="button"
+                        onClick={handleCompare}
+                        aria-disabled={!canSubmit}
+                        className={`text-xs font-semibold underline-offset-4 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded px-2 py-1 ${
+                          canSubmit
+                            ? 'text-secondary hover:text-on-surface hover:underline'
+                            : 'text-secondary/50 cursor-not-allowed'
+                        }`}
+                      >
+                        {t('swap.compareLink', { count: MOCK_PROVIDERS.length })}
+                      </button>
+                    </div>
                   </StaggerItem>
 
                 </Stagger>
@@ -718,7 +747,7 @@ export default function SwapWidget({ onCryptoChange, mode = 'buy', onViewHistory
                   amountCrypto={flowAmountCrypto}
                   wallet={wallet}
                   mode={mode}
-                  providerName={pickedProvider ? (quoteCards.find((c) => c.id === pickedProvider)?.name || pickedProvider) : null}
+                  providerName={pickedProvider ? (quoteCards.find((c) => c.id === pickedProvider)?.name || pickedProviderName(pickedProvider)) : null}
                   onReset={handleReset}
                   onViewHistory={onViewHistory}
                   onWarpChange={onWarpChange}

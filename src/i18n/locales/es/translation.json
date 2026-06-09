@@ -152,9 +152,10 @@
       "walletRequired": "Introduce una dirección {{network}} válida para continuar",
       "payoutRequired": "Indica dónde recibir tus fondos"
     },
-    "providersHint": "Compararemos {{count}} proveedores para ti en el siguiente paso",
+    "providersHint": "Con Transak — verificas una vez y no repites KYC en tu próxima compra",
+    "compareLink": "O comparar {{count}} proveedores",
     "cta": {
-      "continue": "Continuar — comparar proveedores",
+      "continue": "Continuar",
       "needAmountAndPayout": "Introduce el monto y la dirección de cobro",
       "needWallet": "Introduce una dirección de wallet para continuar"
     },
