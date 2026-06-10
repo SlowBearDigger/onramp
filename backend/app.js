@@ -27,6 +27,7 @@ import {
   frontendEventToOrderRow as mtpelerinEventToRow,
   getQuote as getMtPelerinQuote,
 } from './providers/mtpelerin.js'
+import { getQuote as getGuardarianQuote } from './providers/guardarian.js'
 import {
   authenticate as adminAuthenticate,
   requireAdmin,
@@ -94,8 +95,9 @@ const CURRENCY_RE = /^[A-Z0-9]{2,12}$/
 const NETWORK_RE = /^[a-z0-9_-]{2,32}$/
 // buy/sell enum.
 const SIDE_RE = /^(BUY|SELL)$/
-// provider id enum (mirrors src/providers/index.js).
-const PROVIDER_RE = /^(transak|mtpelerin|topper)$/
+// provider id enum. superset of src/providers/index.js — guardarian is
+// quote-only on the backend until its checkout flow is decided.
+const PROVIDER_RE = /^(transak|mtpelerin|topper|guardarian)$/
 
 const app = express()
 
@@ -358,6 +360,25 @@ app.get('/api/quotes/topper', apiLimiter, async (req, res) => {
     res.json({ provider: 'topper', quote })
   } catch (err) {
     sendQuoteError(res, 'topper', err)
+  }
+})
+
+// guardarian quote proxy. quote-only for now — checkout flow lands once
+// the client decides embed-vs-redirect (see backend/providers/guardarian.js).
+app.get('/api/quotes/guardarian', apiLimiter, async (req, res) => {
+  const q = parseQuoteQuery(req, res)
+  if (!q) return
+  try {
+    const quote = await getGuardarianQuote({
+      fiatCurrency: q.fiatCurrency,
+      cryptoCurrency: q.cryptoCurrency,
+      network: q.network,
+      fiatAmount: q.fiatAmount,
+      side: q.isBuyOrSell,
+    })
+    res.json({ provider: 'guardarian', quote })
+  } catch (err) {
+    sendQuoteError(res, 'guardarian', err)
   }
 })
 

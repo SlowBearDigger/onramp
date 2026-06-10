@@ -119,3 +119,35 @@ Steps:
 - **Topper widget postMessage events** — exact event names need verification at `docs.topperpay.com/events/crypto-onramp`. The webhook is the source of truth, but the frontend should mirror at least open/close/created/success states for UX.
 - **Mt Pelerin wallet-address ECDSA locking** — requires a connected wallet (MetaMask). Out of scope for the paste-an-address skeleton flow.
 - **Admin dashboard `/admin`** — not in the skeleton. The DB schema (`provider`, `unverified` columns, `idx_orders_provider` index) is ready for it.
+
+---
+
+## Guardarian (backup ramp — quote-only)
+
+Status: backend quote integration is LIVE; checkout is intentionally not
+wired and the provider is NOT in the frontend registry yet (a quote card
+with a dead pick button is worse than no card).
+
+What exists:
+- `backend/providers/guardarian.js` — `/v1/estimate` proxy with network
+  mapping (ethereum→ETH, bitcoin→BTC, solana→SOL, ...), itemised
+  service-fee summing, BUY + SELL (SELL needs an explicit `cryptoAmount`).
+- `GET /api/quotes/guardarian` — canonical quote shape, same error
+  contract as the other providers (`not_configured` → 503, sell → 501).
+- Env: `GUARDARIAN_API_KEY` (server-side only; auth header `x-api-key`).
+  Set it in Render → Environment for production quotes.
+
+To activate fully:
+1. Decide checkout shape: `POST /v1/transaction` returns a `redirect_url`
+   for Guardarian's hosted flow. Verify whether it is iframe-embeddable
+   (X-Frame-Options) or must open as a redirect/new tab — this decides
+   whether `ProviderModal` can host it or the Provider interface needs a
+   `mode: 'redirect'` variant.
+2. Add `backend` transaction-create endpoint with strict input validation
+   (it has side effects in Guardarian's system — never call it from quote
+   loops).
+3. Implement `src/providers/guardarian/index.js`, register it, extend the
+   CSP frame-src if embedding.
+4. Statuses: poll `GET /v1/transaction/{id}` (no webhooks documented) —
+   reuse the `unverified` row convention if we ingest frontend-reported
+   events, or treat the poll as authoritative.
