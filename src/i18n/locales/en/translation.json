@@ -232,7 +232,12 @@
     "securePayment": "{{provider}} — Secure Payment",
     "poweredBy": "Powered by {{provider}} — 256-bit encrypted",
     "closeAria": "Close {{provider}} payment",
-    "iframeTitle": "{{provider}} Payment widget"
+    "iframeTitle": "{{provider}} Payment widget",
+    "preparing": "Preparing secure checkout…",
+    "preparingHint": "{{provider}} is creating your encrypted session. This can take a few seconds.",
+    "failedTitle": "Couldn't open checkout",
+    "failedBody": "We couldn't reach {{provider}} just now. Check your connection and try again.",
+    "retry": "Try again"
   },
   "skipLink": {
     "main": "Skip to content",

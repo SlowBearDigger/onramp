@@ -242,6 +242,9 @@ export default function PayRecipientPage() {
         <ProviderModal
           isOpen={provider.isOpen}
           widgetUrl={provider.widgetUrl}
+          state={provider.state}
+          error={provider.error}
+          onRetry={provider.retry}
           onMessage={provider.handleMessage}
           onClose={provider.close}
           providerName="Transak"

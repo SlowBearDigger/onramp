@@ -232,7 +232,12 @@
     "securePayment": "{{provider}} — Sichere Zahlung",
     "poweredBy": "Bereitgestellt von {{provider}} — 256-Bit-Verschlüsselung",
     "closeAria": "{{provider}}-Zahlung schließen",
-    "iframeTitle": "{{provider}}-Zahlungs-Widget"
+    "iframeTitle": "{{provider}}-Zahlungs-Widget",
+    "preparing": "Sichere Zahlung wird vorbereitet…",
+    "preparingHint": "{{provider}} erstellt deine verschlüsselte Sitzung. Das kann einige Sekunden dauern.",
+    "failedTitle": "Zahlung konnte nicht geöffnet werden",
+    "failedBody": "Wir konnten {{provider}} gerade nicht erreichen. Prüfe deine Verbindung und versuche es erneut.",
+    "retry": "Erneut versuchen"
   },
   "skipLink": {
     "main": "Zum Inhalt springen",

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useId } from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from 'motion/react'
-import { X, Lock } from '@phosphor-icons/react'
+import { X, Lock, CircleNotch, WarningCircle, ArrowClockwise } from '@phosphor-icons/react'
 
 // generic provider widget modal. wraps the picked provider's iframe and
 // forwards postMessage events to the parent via onMessage. used by SwapWidget
@@ -35,12 +35,25 @@ export default function ProviderModal({
   onClose,
   providerName,
   cryptoColor = '#047857',
+  // state/error/onRetry let the modal show feedback BEFORE the widget URL
+  // exists: a spinner while the backend mints the signed URL (transak cold
+  // start can take ~30s on a sleeping free-tier host) and an actionable
+  // error card if that bootstrap fails. without these the modal locked
+  // scroll but rendered nothing — the page looked frozen. state is the
+  // useProvider machine: 'bootstrapping' | 'widget-open' | 'failed' | ...
+  state,
+  error,
+  onRetry,
 }) {
   const { t } = useTranslation()
   const provider = providerName || t('common.providerName')
   const headingId = useId()
   const closeButtonRef = useRef(null)
   const previouslyFocusedRef = useRef(null)
+
+  // what to paint in the body. the widget iframe wins once we have a URL;
+  // otherwise we're either still preparing it or it failed.
+  const phase = widgetUrl ? 'widget' : state === 'failed' ? 'error' : 'loading'
 
   // listen for postMessage events while open.
   useEffect(() => {
@@ -84,7 +97,7 @@ export default function ProviderModal({
 
   return (
     <AnimatePresence>
-      {isOpen && widgetUrl && (
+      {isOpen && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -133,14 +146,56 @@ export default function ProviderModal({
               </button>
             </div>
 
-            <iframe
-              src={widgetUrl}
-              className="flex-1 w-full border-none"
-              allow="camera;fullscreen;payment"
-              sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-modals"
-              referrerPolicy="no-referrer"
-              title={t('modal.iframeTitle', { provider })}
-            />
+            {phase === 'widget' && (
+              <iframe
+                src={widgetUrl}
+                className="flex-1 w-full border-none"
+                allow="camera;fullscreen;payment"
+                sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-modals"
+                referrerPolicy="no-referrer"
+                title={t('modal.iframeTitle', { provider })}
+              />
+            )}
+
+            {phase === 'loading' && (
+              <div role="status" aria-live="polite" className="flex-1 flex flex-col items-center justify-center gap-4 px-8 text-center">
+                <CircleNotch size={32} weight="bold" className="animate-spin" style={{ color: cryptoColor }} aria-hidden="true" />
+                <p className="text-sm font-semibold text-on-surface">{t('modal.preparing', { provider })}</p>
+                <p className="text-xs text-secondary max-w-[260px] leading-relaxed">{t('modal.preparingHint')}</p>
+              </div>
+            )}
+
+            {phase === 'error' && (
+              <div role="alert" className="flex-1 flex flex-col items-center justify-center gap-4 px-8 text-center">
+                <div className="w-14 h-14 rounded-full flex items-center justify-center bg-error/10">
+                  <WarningCircle size={30} weight="bold" className="text-error" aria-hidden="true" />
+                </div>
+                <div className="space-y-1.5">
+                  <p className="text-base font-bold text-on-surface">{t('modal.failedTitle')}</p>
+                  <p className="text-xs text-secondary max-w-[280px] leading-relaxed">{t('modal.failedBody', { provider })}</p>
+                </div>
+                <div className="flex items-center gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="px-4 py-2.5 rounded-xl font-bold text-sm text-on-surface bg-surface-container-high dark:bg-surface-container-high/60 hover:opacity-90 transition-opacity"
+                  >
+                    {t('common.close')}
+                  </button>
+                  {onRetry && (
+                    <button
+                      type="button"
+                      onClick={onRetry}
+                      className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm text-white hover:opacity-90 transition-opacity"
+                      style={{ backgroundColor: cryptoColor }}
+                    >
+                      <ArrowClockwise size={16} weight="bold" aria-hidden="true" />
+                      {t('modal.retry')}
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
 
             <div className="px-4 py-2 border-t border-outline-variant/10 dark:border-white/5 flex items-center justify-center gap-2">
               <Lock size={12} weight="bold" className="text-secondary" aria-hidden="true" />

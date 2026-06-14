@@ -53,7 +53,13 @@ export function useProvider({ onSuccess, onFailure, onClose } = {}) {
     callbacksRef.current = { onSuccess, onFailure, onClose }
   }, [onSuccess, onFailure, onClose])
 
-  const startOrder = useCallback(async ({ providerId: pid, crypto, fiatAmount, cryptoAmount, walletAddress, fiatCurrency = 'USD', mode = 'buy', email }) => {
+  // remember the last startOrder args so a failed bootstrap can be retried
+  // from the modal without the user re-walking the form. cleared on close.
+  const lastArgsRef = useRef(null)
+
+  const startOrder = useCallback(async (args) => {
+    lastArgsRef.current = args
+    const { providerId: pid, crypto, fiatAmount, cryptoAmount, walletAddress, fiatCurrency = 'USD', mode = 'buy', email } = args
     let provider
     try {
       provider = getProvider(pid)
@@ -173,9 +179,17 @@ export function useProvider({ onSuccess, onFailure, onClose } = {}) {
     setPartnerOrderId(null)
     setProviderId(null)
     setError(null)
+    lastArgsRef.current = null
   }, [])
 
   const reset = close
+
+  // re-run the last startOrder. used by the modal's "try again" button after a
+  // bootstrap failure (backend cold-start / network blip). no-op if there's
+  // nothing to retry.
+  const retry = useCallback(() => {
+    if (lastArgsRef.current) startOrder(lastArgsRef.current)
+  }, [startOrder])
 
   const isOpen = state === 'bootstrapping' ||
                  state === 'widget-open' ||
@@ -197,6 +211,7 @@ export function useProvider({ onSuccess, onFailure, onClose } = {}) {
     handleMessage,
     close,
     reset,
+    retry,
   }
 }
 

@@ -232,7 +232,12 @@
     "securePayment": "{{provider}} — Pago seguro",
     "poweredBy": "Procesado por {{provider}} — cifrado de 256 bits",
     "closeAria": "Cerrar pago de {{provider}}",
-    "iframeTitle": "Widget de pago de {{provider}}"
+    "iframeTitle": "Widget de pago de {{provider}}",
+    "preparing": "Preparando el pago seguro…",
+    "preparingHint": "{{provider}} está creando tu sesión cifrada. Esto puede tardar unos segundos.",
+    "failedTitle": "No se pudo abrir el pago",
+    "failedBody": "No pudimos contactar con {{provider}} en este momento. Revisa tu conexión e inténtalo de nuevo.",
+    "retry": "Reintentar"
   },
   "skipLink": {
     "main": "Saltar al contenido",
