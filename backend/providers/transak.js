@@ -293,6 +293,7 @@ export async function createSignedWidgetUrl(session) {
           'access-token': token,
           'content-type': 'application/json',
           accept: 'application/json',
+          'user-agent': 'onramp-backend/1.0 (+https://github.com/SlowBearDigger/onramp)',
         },
         body: JSON.stringify(body),
         signal: ac.signal,

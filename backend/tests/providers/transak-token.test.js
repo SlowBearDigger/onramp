@@ -102,18 +102,31 @@ describe('getValidAccessToken — auto-refresh path', () => {
 })
 
 describe('getValidAccessToken — override path', () => {
-  it('returns TRANSAK_PARTNER_ACCESS_TOKEN verbatim, skipping refresh', async () => {
+  it('prefers minting over the override when key+secret are configured', async () => {
+    // precedence changed 2026-06: a stale override env var must not be able
+    // to shadow valid long-lived creds (that combination silently broke
+    // production). fresh mint wins; override is the fallback.
     process.env.TRANSAK_PARTNER_ACCESS_TOKEN = 'manually.pasted.jwt'
+    const futureExpiry = Math.floor(Date.now() / 1000) + 7 * 24 * 3600
+    mockRefresh('jwt.minted', futureExpiry)
     const t = await getValidAccessToken()
-    expect(t).toBe('manually.pasted.jwt')
-    expect(globalThis.fetch).not.toHaveBeenCalled()
+    expect(t).toBe('jwt.minted')
+    expect(globalThis.fetch).toHaveBeenCalledTimes(1)
   })
 
-  it('override works even without TRANSAK_API_SECRET', async () => {
+  it('falls back to the override when minting fails', async () => {
+    process.env.TRANSAK_PARTNER_ACCESS_TOKEN = 'manually.pasted.jwt'
+    globalThis.fetch.mockImplementationOnce(async () => new Response('boom', { status: 500 }))
+    const t = await getValidAccessToken()
+    expect(t).toBe('manually.pasted.jwt')
+  })
+
+  it('uses the override without fetching when key/secret are absent', async () => {
     delete process.env.TRANSAK_API_SECRET
     process.env.TRANSAK_PARTNER_ACCESS_TOKEN = 'manually.pasted.jwt'
     const t = await getValidAccessToken()
     expect(t).toBe('manually.pasted.jwt')
+    expect(globalThis.fetch).not.toHaveBeenCalled()
   })
 })
 

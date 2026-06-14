@@ -191,9 +191,10 @@
       "walletRequired": "Bitte geben Sie eine gültige {{network}}-Adresse ein, um fortzufahren",
       "payoutRequired": "Geben Sie an, wohin Sie Ihre Gelder erhalten möchten"
     },
-    "providersHint": "Im nächsten Schritt vergleichen wir {{count}} Anbieter für Sie",
+    "providersHint": "Über Transak — einmal verifizieren, beim nächsten Kauf kein KYC",
+    "compareLink": "Oder {{count}} Anbieter vergleichen",
     "cta": {
-      "continue": "Weiter — Anbieter vergleichen",
+      "continue": "Weiter",
       "needAmountAndPayout": "Betrag und Auszahlungsadresse eingeben",
       "needWallet": "Wallet-Adresse eingeben, um fortzufahren"
     },

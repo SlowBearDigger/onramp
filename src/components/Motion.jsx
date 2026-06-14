@@ -251,6 +251,10 @@ export function Sparkline({ data = [], color = '#047857', width = 60, height = 2
             r={3}
             fill={color}
             opacity={0.5}
+            // explicit initial keeps framer from writing r="undefined" on
+            // the first frame (svg attribute keyframes quirk) — was filling
+            // the console with <circle> attribute errors on every mount.
+            initial={{ r: 3, opacity: 0.5 }}
             animate={{ r: [3, 9, 3], opacity: [0.5, 0, 0.5] }}
             transition={{ duration: 1.6, repeat: Infinity, ease: 'easeOut' }}
           />

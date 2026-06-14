@@ -40,6 +40,25 @@ const TRANSAK_EVENTS = {
   ORDER_CANCELLED: 'TRANSAK_ORDER_CANCELLED',
 }
 
+// our internal network ids (CRYPTOS[].network) → transak network ids.
+// transak rejects unknown ids with "Invalid network id", so anything not
+// in this map passes through unchanged (EVM ids and solana already match).
+// verified empirically against the staging pricing API (2026-06-09):
+// BTC/XRP/ADA/DOGE all live on transak's "mainnet"; DOT quotes are not
+// available on staging at all — it stays mapped so the widget can still
+// try, and the quote card degrades to "unavailable".
+const TRANSAK_NETWORK_MAP = {
+  bitcoin: 'mainnet',
+  ripple: 'mainnet',
+  cardano: 'mainnet',
+  dogecoin: 'mainnet',
+  polkadot: 'mainnet',
+}
+
+export function toTransakNetwork(network) {
+  return TRANSAK_NETWORK_MAP[network] || network
+}
+
 // normalise a transak event payload into the canonical order shape.
 // transak nests actual order fields inside .status (legacy) or directly (newer
 // events) — this flattens both shapes.
@@ -80,7 +99,7 @@ const transak = {
     const body = {
       mode: params.mode,
       cryptoCurrency: params.cryptoCurrency,
-      cryptoNetwork: params.cryptoNetwork,
+      cryptoNetwork: toTransakNetwork(params.cryptoNetwork),
       fiatCurrency: params.fiatCurrency,
       fiatAmount: params.fiatAmount,
       cryptoAmount: params.cryptoAmount,

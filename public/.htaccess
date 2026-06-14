@@ -83,7 +83,7 @@
   Header set Content-Security-Policy "default-src 'self'; \
 script-src 'self'; \
 style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://api.fontshare.com; \
-font-src 'self' https://fonts.gstatic.com https://cdn.fontshare.com data:; \
+font-src 'self' https://fonts.gstatic.com https://cdn.fontshare.com https://fonts.reown.com data:; \
 img-src 'self' data: blob: https:; \
 connect-src 'self' https://api.slowbeardigger.dev https://api.transak.com https://api-stg.transak.com https://api.mtpelerin.com https://api.topperpay.com https://api.sandbox.topperpay.com https://api.coingecko.com; \
 frame-src https://global.transak.com https://global-stg.transak.com https://staging-global.transak.com https://widget.mtpelerin.com https://app.topperpay.com https://app.sandbox.topperpay.com; \

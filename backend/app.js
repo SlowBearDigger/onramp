@@ -5,6 +5,7 @@ import helmet from 'helmet'
 import rateLimit from 'express-rate-limit'
 
 import { upsertOrder, listOrders, getOrderById } from './db.js'
+import { fetchPartnerOrders, partnerOrderToRow } from './providers/transak-orders.js'
 import {
   verifyOrderWebhook as verifyTransakWebhook,
   webhookToOrderRow as transakWebhookToRow,
@@ -26,6 +27,7 @@ import {
   frontendEventToOrderRow as mtpelerinEventToRow,
   getQuote as getMtPelerinQuote,
 } from './providers/mtpelerin.js'
+import { getQuote as getGuardarianQuote } from './providers/guardarian.js'
 import {
   authenticate as adminAuthenticate,
   requireAdmin,
@@ -93,8 +95,9 @@ const CURRENCY_RE = /^[A-Z0-9]{2,12}$/
 const NETWORK_RE = /^[a-z0-9_-]{2,32}$/
 // buy/sell enum.
 const SIDE_RE = /^(BUY|SELL)$/
-// provider id enum (mirrors src/providers/index.js).
-const PROVIDER_RE = /^(transak|mtpelerin|topper)$/
+// provider id enum. superset of src/providers/index.js — guardarian is
+// quote-only on the backend until its checkout flow is decided.
+const PROVIDER_RE = /^(transak|mtpelerin|topper|guardarian)$/
 
 const app = express()
 
@@ -132,6 +135,9 @@ const webhookLimiter = rateLimit({ windowMs: 60_000, max: 60, standardHeaders: t
 const widgetUrlLimiter = rateLimit({ windowMs: 60_000, max: 10, standardHeaders: true, legacyHeaders: false })
 const pushSubscribeLimiter = rateLimit({ windowMs: 60_000, max: 10, standardHeaders: true, legacyHeaders: false })
 const mtpelerinEventLimiter = rateLimit({ windowMs: 60_000, max: 10, standardHeaders: true, legacyHeaders: false })
+// profile sync spends transak partner-api quota on every call — keep it
+// tighter than the local-only endpoints.
+const profileSyncLimiter = rateLimit({ windowMs: 60_000, max: 6, standardHeaders: true, legacyHeaders: false })
 
 // topper webhook needs the RAW body (the detached JWS signs the bytes
 // verbatim). mount it BEFORE express.json so req.body is a Buffer here.
@@ -190,6 +196,43 @@ app.get('/api/orders', apiLimiter, (req, res) => {
   }
   const orders = listOrders({ customerId, provider })
   res.json({ orders })
+})
+
+// on-demand reconciliation against transak's partner orders api: pull
+// COMPLETED orders for this wallet, upsert them locally (backfills anything
+// webhooks missed and promotes unverified rows), then return the merged
+// local view. powers the in-app "your history" without leaving the site.
+//
+// the frontend should call this on history-view open, not in a poll loop —
+// polling stays on /api/orders, which never touches the upstream.
+app.get('/api/profile/orders', profileSyncLimiter, async (req, res) => {
+  const walletAddress = typeof req.query.walletAddress === 'string' ? req.query.walletAddress : ''
+  if (!CUSTOMER_ID_RE.test(walletAddress)) {
+    return res.status(400).json({ error: 'invalid_walletAddress' })
+  }
+
+  let synced = 0
+  let syncError = null
+  try {
+    const partnerOrders = await fetchPartnerOrders({ walletAddress })
+    for (const order of partnerOrders) {
+      const row = partnerOrderToRow(order)
+      if (row) {
+        upsertOrder(row)
+        synced++
+      }
+    }
+  } catch (err) {
+    // degrade gracefully: a partner-api hiccup must not blank the user's
+    // history. return the local view and flag that the sync was partial.
+    console.error('[profile] partner orders sync failed:', err?.message)
+    syncError = err?.code === 'not_configured' ? 'not_configured'
+      : err?.code === 'auth_failed' ? 'auth_failed'
+      : 'upstream_error'
+  }
+
+  const orders = listOrders({ customerId: walletAddress })
+  res.json({ orders, sync: syncError ? { ok: false, reason: syncError } : { ok: true, synced } })
 })
 
 app.get('/api/orders/:id', apiLimiter, (req, res) => {
@@ -317,6 +360,25 @@ app.get('/api/quotes/topper', apiLimiter, async (req, res) => {
     res.json({ provider: 'topper', quote })
   } catch (err) {
     sendQuoteError(res, 'topper', err)
+  }
+})
+
+// guardarian quote proxy. quote-only for now — checkout flow lands once
+// the client decides embed-vs-redirect (see backend/providers/guardarian.js).
+app.get('/api/quotes/guardarian', apiLimiter, async (req, res) => {
+  const q = parseQuoteQuery(req, res)
+  if (!q) return
+  try {
+    const quote = await getGuardarianQuote({
+      fiatCurrency: q.fiatCurrency,
+      cryptoCurrency: q.cryptoCurrency,
+      network: q.network,
+      fiatAmount: q.fiatAmount,
+      side: q.isBuyOrSell,
+    })
+    res.json({ provider: 'guardarian', quote })
+  } catch (err) {
+    sendQuoteError(res, 'guardarian', err)
   }
 })
 
