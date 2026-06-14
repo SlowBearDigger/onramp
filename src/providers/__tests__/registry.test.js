@@ -3,9 +3,9 @@ import { PROVIDERS, PROVIDER_IDS, getProvider, listProviderMetadata } from '../i
 import { assertIsProvider } from '../Provider.js'
 
 describe('provider registry', () => {
-  it('exports all three providers', () => {
-    expect(PROVIDER_IDS).toEqual(expect.arrayContaining(['transak', 'mtpelerin', 'topper']))
-    expect(PROVIDER_IDS.length).toBe(3)
+  it('exports all four providers', () => {
+    expect(PROVIDER_IDS).toEqual(expect.arrayContaining(['transak', 'mtpelerin', 'topper', 'guardarian']))
+    expect(PROVIDER_IDS.length).toBe(4)
   })
 
   it('every registered provider conforms to the Provider interface', () => {
@@ -18,6 +18,7 @@ describe('provider registry', () => {
     expect(getProvider('transak')).toBe(PROVIDERS.transak)
     expect(getProvider('mtpelerin')).toBe(PROVIDERS.mtpelerin)
     expect(getProvider('topper')).toBe(PROVIDERS.topper)
+    expect(getProvider('guardarian')).toBe(PROVIDERS.guardarian)
   })
 
   it('getProvider throws on unknown id', () => {
@@ -27,7 +28,7 @@ describe('provider registry', () => {
 
   it('listProviderMetadata returns metadata for every provider with id matching the registry key', () => {
     const list = listProviderMetadata()
-    expect(list.length).toBe(3)
+    expect(list.length).toBe(4)
     for (const meta of list) {
       expect(PROVIDER_IDS).toContain(meta.id)
       expect(meta.name).toBeTruthy()
@@ -37,11 +38,16 @@ describe('provider registry', () => {
     }
   })
 
-  it('exactly one provider has hasWebhook=false (mtpelerin — the unverified-events one)', () => {
+  it('mtpelerin and guardarian are the hasWebhook=false providers', () => {
     const list = listProviderMetadata()
-    const noWebhook = list.filter((m) => !m.hasWebhook)
-    expect(noWebhook.length).toBe(1)
-    expect(noWebhook[0].id).toBe('mtpelerin')
+    const noWebhook = list.filter((m) => !m.hasWebhook).map((m) => m.id).sort()
+    expect(noWebhook).toEqual(['guardarian', 'mtpelerin'])
+  })
+
+  it('guardarian is the only redirect-checkout provider', () => {
+    const list = listProviderMetadata()
+    const redirect = list.filter((m) => m.checkout === 'redirect').map((m) => m.id)
+    expect(redirect).toEqual(['guardarian'])
   })
 })
 

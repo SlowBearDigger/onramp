@@ -47,6 +47,10 @@ export function useProvider({ onSuccess, onFailure, onClose } = {}) {
   const [widgetUrl, setWidgetUrl] = useState(null)
   const [partnerOrderId, setPartnerOrderId] = useState(null)
   const [error, setError] = useState(null)
+  // 'iframe' (transak/mtpelerin/topper) vs 'redirect' (guardarian). drives
+  // whether ProviderModal mounts the widget iframe or a hosted-checkout
+  // handoff card.
+  const [checkoutMode, setCheckoutMode] = useState('iframe')
 
   const callbacksRef = useRef({ onSuccess, onFailure, onClose })
   useEffect(() => {
@@ -68,6 +72,8 @@ export function useProvider({ onSuccess, onFailure, onClose } = {}) {
       setState('failed')
       return null
     }
+
+    setCheckoutMode(provider.getMetadata().checkout === 'redirect' ? 'redirect' : 'iframe')
 
     const orderId = generateUUID()
     const dark = document.documentElement.classList.contains('dark')
@@ -179,6 +185,7 @@ export function useProvider({ onSuccess, onFailure, onClose } = {}) {
     setPartnerOrderId(null)
     setProviderId(null)
     setError(null)
+    setCheckoutMode('iframe')
     lastArgsRef.current = null
   }, [])
 
@@ -207,6 +214,7 @@ export function useProvider({ onSuccess, onFailure, onClose } = {}) {
     partnerOrderId,
     error,
     isOpen,
+    checkoutMode,
     startOrder,
     handleMessage,
     close,

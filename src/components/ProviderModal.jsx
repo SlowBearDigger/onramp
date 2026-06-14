@@ -1,7 +1,7 @@
 import { useEffect, useRef, useId } from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from 'motion/react'
-import { X, Lock, CircleNotch, WarningCircle, ArrowClockwise } from '@phosphor-icons/react'
+import { X, Lock, CircleNotch, WarningCircle, ArrowClockwise, ArrowSquareOut, ShieldCheck } from '@phosphor-icons/react'
 
 // generic provider widget modal. wraps the picked provider's iframe and
 // forwards postMessage events to the parent via onMessage. used by SwapWidget
@@ -44,6 +44,10 @@ export default function ProviderModal({
   state,
   error,
   onRetry,
+  // 'iframe' (default) mounts the widget. 'redirect' (guardarian) renders a
+  // hosted-checkout handoff card with a Continue link instead — the provider
+  // page can't be embedded and the user finishes on its own domain.
+  checkout = 'iframe',
 }) {
   const { t } = useTranslation()
   const provider = providerName || t('common.providerName')
@@ -51,9 +55,12 @@ export default function ProviderModal({
   const closeButtonRef = useRef(null)
   const previouslyFocusedRef = useRef(null)
 
-  // what to paint in the body. the widget iframe wins once we have a URL;
-  // otherwise we're either still preparing it or it failed.
-  const phase = widgetUrl ? 'widget' : state === 'failed' ? 'error' : 'loading'
+  // what to paint in the body. once a URL exists: an iframe for embedded
+  // providers, or a handoff card for redirect ones. before that we're either
+  // still preparing it or it failed.
+  const phase = widgetUrl
+    ? (checkout === 'redirect' ? 'redirect' : 'widget')
+    : state === 'failed' ? 'error' : 'loading'
 
   // listen for postMessage events while open.
   useEffect(() => {
@@ -155,6 +162,30 @@ export default function ProviderModal({
                 referrerPolicy="no-referrer"
                 title={t('modal.iframeTitle', { provider })}
               />
+            )}
+
+            {phase === 'redirect' && (
+              <div className="flex-1 flex flex-col items-center justify-center gap-5 px-8 text-center">
+                <div className="w-14 h-14 rounded-full flex items-center justify-center" style={{ backgroundColor: `${cryptoColor}1a` }}>
+                  <ShieldCheck size={30} weight="bold" style={{ color: cryptoColor }} aria-hidden="true" />
+                </div>
+                <div className="space-y-1.5">
+                  <p className="text-base font-bold text-on-surface">{t('modal.redirectTitle', { provider })}</p>
+                  <p className="text-xs text-secondary max-w-[300px] leading-relaxed">{t('modal.redirectBody', { provider })}</p>
+                </div>
+                <a
+                  href={widgetUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => onClose?.()}
+                  className="inline-flex items-center gap-2 px-5 py-3 rounded-xl font-bold text-sm text-white hover:opacity-90 transition-opacity"
+                  style={{ backgroundColor: cryptoColor }}
+                >
+                  {t('modal.continueTo', { provider })}
+                  <ArrowSquareOut size={16} weight="bold" aria-hidden="true" />
+                </a>
+                <p className="text-[11px] text-secondary/70 max-w-[280px] leading-relaxed">{t('modal.redirectHint', { provider })}</p>
+              </div>
             )}
 
             {phase === 'loading' && (

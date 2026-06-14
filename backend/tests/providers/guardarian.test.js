@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { getQuote, toGuardarianNetwork, isGuardarianEnabled } from '../../providers/guardarian.js'
+import { getQuote, toGuardarianNetwork, isGuardarianEnabled, createTransaction } from '../../providers/guardarian.js'
 
 // real response shape captured from the staging probe (2026-06-09).
 const SAMPLE_ESTIMATE = {
@@ -31,6 +31,65 @@ describe('toGuardarianNetwork', () => {
   it('returns null for unknown networks (omitted from the query)', () => {
     expect(toGuardarianNetwork('cardano')).toBeNull()
     expect(toGuardarianNetwork(null)).toBeNull()
+  })
+})
+
+// real transaction-create response shape captured from the production probe
+// (2026-06-14) — guardarian returns a complete hosted redirect_url.
+const SAMPLE_TX = {
+  id: '5808727624',
+  status: 'new',
+  redirect_url: 'https://payments.guardarian.com/en/checkout?tid=5808727624',
+  expected_to_amount: '0.0017399295410615364',
+}
+
+describe('createTransaction — BUY', () => {
+  const baseArgs = {
+    fiatCurrency: 'EUR',
+    cryptoCurrency: 'BTC',
+    network: 'bitcoin',
+    fiatAmount: 100,
+    walletAddress: 'bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq',
+    partnerOrderId: 'abc-123-def-456',
+  }
+
+  it('returns the hosted redirect url and attaches the payout address', async () => {
+    fetch.mockResolvedValueOnce({ ok: true, json: async () => SAMPLE_TX })
+    const out = await createTransaction(baseArgs)
+    expect(out.redirectUrl).toBe('https://payments.guardarian.com/en/checkout?tid=5808727624')
+    expect(out.id).toBe('5808727624')
+
+    const [url, opts] = fetch.mock.calls[0]
+    expect(url).toMatch(/\/transaction$/)
+    expect(opts.method).toBe('POST')
+    expect(opts.headers['x-api-key']).toBe('test-key')
+    const body = JSON.parse(opts.body)
+    expect(body.from_currency).toBe('EUR')
+    expect(body.to_currency).toBe('BTC')
+    expect(body.to_network).toBe('BTC')
+    expect(body.payout_info.payout_address).toBe(baseArgs.walletAddress)
+    expect(body.payout_info.skip_choose_payout_address).toBe(true)
+  })
+
+  it('falls back to building the checkout url from id when redirect_url is absent', async () => {
+    fetch.mockResolvedValueOnce({ ok: true, json: async () => ({ id: '999', status: 'new' }) })
+    const out = await createTransaction(baseArgs)
+    expect(out.redirectUrl).toBe('https://payments.guardarian.com/checkout?tid=999')
+  })
+
+  it('throws not_configured when the api key is missing', async () => {
+    vi.stubEnv('GUARDARIAN_API_KEY', '')
+    await expect(createTransaction(baseArgs)).rejects.toMatchObject({ code: 'not_configured' })
+  })
+
+  it('maps a 429 upstream to a rate_limited error', async () => {
+    fetch.mockResolvedValueOnce({ ok: false, status: 429, text: async () => 'slow down' })
+    await expect(createTransaction(baseArgs)).rejects.toMatchObject({ code: 'rate_limited' })
+  })
+
+  it('throws invalid_response when neither redirect_url nor id is present', async () => {
+    fetch.mockResolvedValueOnce({ ok: true, json: async () => ({ status: 'new' }) })
+    await expect(createTransaction(baseArgs)).rejects.toMatchObject({ code: 'invalid_response' })
   })
 })
 

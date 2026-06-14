@@ -238,7 +238,11 @@
     "preparingHint": "{{provider}} está creando tu sesión cifrada. Esto puede tardar unos segundos.",
     "failedTitle": "No se pudo abrir el pago",
     "failedBody": "No pudimos contactar con {{provider}} en este momento. Revisa tu conexión e inténtalo de nuevo.",
-    "retry": "Reintentar"
+    "retry": "Reintentar",
+    "redirectTitle": "Termina en {{provider}}",
+    "redirectBody": "Vas a completar esta compra en el checkout seguro de {{provider}}. Tu dirección de wallet ya va adjunta.",
+    "continueTo": "Continuar a {{provider}}",
+    "redirectHint": "{{provider}} es un proveedor regulado. Cobra el pago y envía la cripto directo a tu wallet — nosotros nunca tocamos tus fondos."
   },
   "skipLink": {
     "main": "Saltar al contenido",

@@ -122,32 +122,46 @@ Steps:
 
 ---
 
-## Guardarian (backup ramp — quote-only)
+## Guardarian (backup ramp — quote + REDIRECT checkout)
 
-Status: backend quote integration is LIVE; checkout is intentionally not
-wired and the provider is NOT in the frontend registry yet (a quote card
-with a dead pick button is worse than no card).
+Status: LIVE end-to-end (BUY). Quote integration + redirect checkout are
+both wired, and the provider is registered in the frontend (comparison card
++ redirect handoff). Checkout shape = REDIRECT (client decision 2026-06-14):
+the user finishes on Guardarian's own hosted, regulated page — we never
+embed it, which keeps us clear of payment-facilitator framing.
 
 What exists:
-- `backend/providers/guardarian.js` — `/v1/estimate` proxy with network
-  mapping (ethereum→ETH, bitcoin→BTC, solana→SOL, ...), itemised
-  service-fee summing, BUY + SELL (SELL needs an explicit `cryptoAmount`).
-- `GET /api/quotes/guardarian` — canonical quote shape, same error
-  contract as the other providers (`not_configured` → 503, sell → 501).
+- `backend/providers/guardarian.js`:
+  - `getQuote` — `/v1/estimate` proxy with network mapping (ethereum→ETH,
+    bitcoin→BTC, ...), itemised service-fee summing, BUY + SELL (SELL needs
+    an explicit `cryptoAmount`).
+  - `createTransaction` — `POST /v1/transaction` (BUY). Sends
+    `from_amount/from_currency/to_currency/to_network`, the recipient under
+    `payout_info.payout_address` (+ `skip_choose_payout_address`), and a
+    `redirects` object. Returns guardarian's hosted `redirect_url`
+    (`https://payments.guardarian.com/.../checkout?tid=…`), falling back to
+    building it from the transaction `id`.
+- `GET /api/quotes/guardarian` — canonical quote shape, same error contract
+  as the other providers (`not_configured` → 503, sell → 501).
+- `POST /api/providers/guardarian/transaction` — strict input validation
+  (mirrors transak widget-url), behind `guardarianTxLimiter` (6/min). Fans a
+  single validated app-origin `redirectURL` into guardarian's
+  `{ successful, cancelled, failed }`. Never reachable from the quote loop.
+- `src/providers/guardarian/index.js` — Provider in REDIRECT mode
+  (`getMetadata().checkout === 'redirect'`, empty `getOrigins`, no-op
+  `parseEvent`). `useProvider` exposes `checkoutMode`; `ProviderModal`
+  renders a hosted-checkout handoff card (Continue link, `target=_blank`)
+  instead of an iframe.
 - Env: `GUARDARIAN_API_KEY` (server-side only; auth header `x-api-key`).
-  Set it in Render → Environment for production quotes.
+  Set it in Render → Environment for production.
 
-To activate fully:
-1. Decide checkout shape: `POST /v1/transaction` returns a `redirect_url`
-   for Guardarian's hosted flow. Verify whether it is iframe-embeddable
-   (X-Frame-Options) or must open as a redirect/new tab — this decides
-   whether `ProviderModal` can host it or the Provider interface needs a
-   `mode: 'redirect'` variant.
-2. Add `backend` transaction-create endpoint with strict input validation
-   (it has side effects in Guardarian's system — never call it from quote
-   loops).
-3. Implement `src/providers/guardarian/index.js`, register it, extend the
-   CSP frame-src if embedding.
-4. Statuses: poll `GET /v1/transaction/{id}` (no webhooks documented) —
-   reuse the `unverified` row convention if we ingest frontend-reported
-   events, or treat the poll as authoritative.
+Constraints / follow-ups:
+- Guardarian throttles transaction creation to ~1/min per IP upstream
+  (`guardarianTxLimiter` keeps our gate tight; a 429 surfaces as
+  `rate_limited`).
+- No CSP change needed — the redirect is a top-level navigation/new tab to
+  `payments.guardarian.com`, not a `frame-src`/`connect-src` resource.
+- No webhooks documented → order status is not ingested. To show Guardarian
+  orders in history later, poll `GET /v1/transaction/{id}` (treat the poll
+  as authoritative; reuse the `unverified` row convention if needed).
+- SELL is not wired for checkout (BUY only).

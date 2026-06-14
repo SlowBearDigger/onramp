@@ -238,7 +238,11 @@
     "preparingHint": "{{provider}} is creating your encrypted session. This can take a few seconds.",
     "failedTitle": "Couldn't open checkout",
     "failedBody": "We couldn't reach {{provider}} just now. Check your connection and try again.",
-    "retry": "Try again"
+    "retry": "Try again",
+    "redirectTitle": "Finish on {{provider}}",
+    "redirectBody": "You'll complete this purchase on {{provider}}'s secure checkout. Your wallet address is already attached.",
+    "continueTo": "Continue to {{provider}}",
+    "redirectHint": "{{provider}} is a regulated provider. It takes the payment and sends the crypto straight to your wallet — we never hold your funds."
   },
   "skipLink": {
     "main": "Skip to content",

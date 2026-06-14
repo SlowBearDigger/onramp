@@ -238,7 +238,11 @@
     "preparingHint": "{{provider}} erstellt deine verschlüsselte Sitzung. Das kann einige Sekunden dauern.",
     "failedTitle": "Zahlung konnte nicht geöffnet werden",
     "failedBody": "Wir konnten {{provider}} gerade nicht erreichen. Prüfe deine Verbindung und versuche es erneut.",
-    "retry": "Erneut versuchen"
+    "retry": "Erneut versuchen",
+    "redirectTitle": "Abschluss bei {{provider}}",
+    "redirectBody": "Du schließt diesen Kauf auf der sicheren Checkout-Seite von {{provider}} ab. Deine Wallet-Adresse ist bereits hinterlegt.",
+    "continueTo": "Weiter zu {{provider}}",
+    "redirectHint": "{{provider}} ist ein regulierter Anbieter. Er nimmt die Zahlung entgegen und sendet die Kryptowährung direkt an deine Wallet — wir halten deine Gelder nie."
   },
   "skipLink": {
     "main": "Zum Inhalt springen",

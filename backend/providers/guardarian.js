@@ -8,13 +8,14 @@
 //       estimated_exchange_rate, converted_amount, network_fee }
 // both directions work (fiat→crypto = BUY, crypto→fiat = SELL).
 //
-// checkout flow (POST /v1/transaction → redirect_url) is deliberately NOT
-// wired yet: creating transactions has side effects in guardarian's
-// system, and whether we embed (iframe) or redirect is a product call
-// pending the client's decision on guardarian's role (pay backup vs 4th
-// comparison provider). until then this module is quote-only and the
-// provider is NOT registered in the frontend registry — no dead-click
-// cards. see docs/PROVIDERS.md.
+// checkout = REDIRECT (client decision 2026-06-14). createTransaction below
+// POSTs /v1/transaction (x-api-key, server-side) and returns guardarian's
+// hosted `redirect_url` (https://payments.guardarian.com/.../checkout?tid=..).
+// the user finishes on guardarian's own regulated page — we never embed it,
+// which keeps us clear of payment-facilitator framing. guardarian rate-limits
+// transaction creation to ~1 request/minute per IP; never call it from a
+// quote loop. no webhooks documented → order status would need polling
+// GET /v1/transaction/{id} (not wired yet). see docs/PROVIDERS.md.
 
 const GUARDARIAN_API_BASE = 'https://api-payments.guardarian.com/v1'
 
@@ -100,6 +101,82 @@ export async function getQuote({ fiatCurrency, cryptoCurrency, network, fiatAmou
     }
     const data = await r.json()
     return parseEstimate(data)
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
+// create a BUY (fiat→crypto) transaction and return guardarian's hosted
+// checkout URL. payout_address is the recipient wallet (where the crypto
+// lands). redirects = { successful, cancelled, failed } — guardarian sends
+// the user back to these after the hosted flow. all inputs are pre-validated
+// by the route; we still String()/whitelist here as defence in depth.
+export async function createTransaction({ fiatCurrency, cryptoCurrency, network, fiatAmount, walletAddress, partnerOrderId, redirects }) {
+  const apiKey = process.env.GUARDARIAN_API_KEY
+  if (!apiKey) {
+    const err = new Error('guardarian: GUARDARIAN_API_KEY not set')
+    err.code = 'not_configured'
+    throw err
+  }
+
+  const net = toGuardarianNetwork(network)
+  const body = {
+    from_amount: String(Number(fiatAmount)),
+    from_currency: fiatCurrency,
+    to_currency: cryptoCurrency,
+    ...(net ? { to_network: net } : {}),
+    payout_address: walletAddress,
+    // payout_info mirrors payout_address + asks guardarian to pre-fill it so
+    // the payer doesn't retype the address on the hosted page.
+    payout_info: { payout_address: walletAddress, skip_choose_payout_address: true },
+    ...(redirects ? { redirects } : {}),
+    ...(partnerOrderId ? { external_partner_link_id: String(partnerOrderId) } : {}),
+  }
+
+  // create is slower than estimate and guardarian throttles it hard — give it
+  // a 12s budget instead of the quote path's 4s.
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), 12_000)
+  try {
+    const r = await fetch(`${GUARDARIAN_API_BASE}/transaction`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        accept: 'application/json',
+        'x-api-key': apiKey,
+        'user-agent': 'onramp-backend/1.0 (+https://github.com/SlowBearDigger/onramp)',
+      },
+      body: JSON.stringify(body),
+      signal: controller.signal,
+      redirect: 'error',
+    })
+    if (!r.ok) {
+      const detail = await r.text().catch(() => '')
+      const err = new Error(`guardarian transaction HTTP ${r.status}: ${detail.slice(0, 200)}`)
+      // 429 = guardarian's per-IP create throttle; surface it distinctly so
+      // the UI can say "try again in a moment" rather than a generic failure.
+      err.code = r.status === 401 || r.status === 403
+        ? 'not_configured'
+        : r.status === 429
+          ? 'rate_limited'
+          : 'upstream_error'
+      err.status = r.status
+      throw err
+    }
+    const data = await r.json()
+    const redirectUrl = typeof data?.redirect_url === 'string' && data.redirect_url
+      ? data.redirect_url
+      : (data?.id ? `https://payments.guardarian.com/checkout?tid=${data.id}` : null)
+    if (!redirectUrl) {
+      const err = new Error('guardarian: transaction response missing redirect_url')
+      err.code = 'invalid_response'
+      throw err
+    }
+    return {
+      redirectUrl,
+      id: data?.id ?? null,
+      expectedToAmount: data?.expected_to_amount ?? null,
+    }
   } finally {
     clearTimeout(timer)
   }

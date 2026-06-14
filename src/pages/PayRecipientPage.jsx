@@ -245,6 +245,7 @@ export default function PayRecipientPage() {
           state={provider.state}
           error={provider.error}
           onRetry={provider.retry}
+          checkout={provider.checkoutMode}
           onMessage={provider.handleMessage}
           onClose={provider.close}
           providerName="Transak"

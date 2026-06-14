@@ -238,7 +238,11 @@
     "preparingHint": "{{provider}} crée votre session chiffrée. Cela peut prendre quelques secondes.",
     "failedTitle": "Impossible d'ouvrir le paiement",
     "failedBody": "Nous n'avons pas pu joindre {{provider}} pour le moment. Vérifiez votre connexion et réessayez.",
-    "retry": "Réessayer"
+    "retry": "Réessayer",
+    "redirectTitle": "Finaliser sur {{provider}}",
+    "redirectBody": "Vous finaliserez cet achat sur la page de paiement sécurisée de {{provider}}. Votre adresse de wallet est déjà jointe.",
+    "continueTo": "Continuer vers {{provider}}",
+    "redirectHint": "{{provider}} est un prestataire régulé. Il encaisse le paiement et envoie la crypto directement vers votre wallet — nous ne détenons jamais vos fonds."
   },
   "skipLink": {
     "main": "Aller au contenu",

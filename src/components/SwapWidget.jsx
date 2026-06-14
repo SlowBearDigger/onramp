@@ -9,7 +9,7 @@ import { MOCK_PROVIDERS } from '../data/mockData'
 import { FIAT_OPTIONS, PAYMENT_METHODS } from '../config/cryptos'
 import { useLiveTicker } from '../hooks/useLiveTicker'
 import { useProvider } from '../hooks/useProvider'
-import { listProviderMetadata } from '../providers/index.js'
+import { listProviderMetadata, PROVIDER_IDS } from '../providers/index.js'
 import { toTransakNetwork } from '../providers/transak/index.js'
 import TransactionFlow from './TransactionFlow'
 import ProviderModal from './ProviderModal'
@@ -333,13 +333,19 @@ export default function SwapWidget({ onCryptoChange, mode = 'buy', onViewHistory
     const cryptoNetwork = crypto.network || 'ethereum'
     const side = isSell ? 'SELL' : 'BUY'
 
-    Promise.allSettled([
-      // transak's pricing api has its own network ids (BTC lives on
-      // "mainnet", not "bitcoin") — translate or the quote 400s.
-      fetchQuote('transak', { fiat: requestedFiat, crypto: cryptoSymbol, network: toTransakNetwork(cryptoNetwork), side, amount: requestedAmount }),
-      fetchQuote('mtpelerin', { fiat: requestedFiat, crypto: cryptoSymbol, network: cryptoNetwork, side, amount: requestedAmount }),
-      fetchQuote('topper', { fiat: requestedFiat, crypto: cryptoSymbol, network: cryptoNetwork, side, amount: requestedAmount }),
-    ]).then((results) => {
+    // registry-driven so a newly-registered provider (e.g. guardarian) gets a
+    // quote card automatically. transak's pricing api has its own network ids
+    // (BTC lives on "mainnet", not "bitcoin") — translate for it or the quote
+    // 400s; every other provider takes the canonical network slug.
+    Promise.allSettled(
+      meta.map((m) => fetchQuote(m.id, {
+        fiat: requestedFiat,
+        crypto: cryptoSymbol,
+        network: m.id === 'transak' ? toTransakNetwork(cryptoNetwork) : cryptoNetwork,
+        side,
+        amount: requestedAmount,
+      }))
+    ).then((results) => {
       if (cancelled) return
       const next = meta.map((m, i) => {
         const r = results[i]
@@ -627,7 +633,7 @@ export default function SwapWidget({ onCryptoChange, mode = 'buy', onViewHistory
                   <StaggerItem>
                     <div className="flex items-center justify-center gap-2 text-xs text-secondary px-1 sm:px-2">
                       <SealCheck size={14} weight="fill" className="text-success" aria-hidden="true" />
-                      <span>{t('swap.providersHint', { count: MOCK_PROVIDERS.length })}</span>
+                      <span>{t('swap.providersHint', { count: PROVIDER_IDS.length })}</span>
                     </div>
                   </StaggerItem>
 
@@ -721,7 +727,7 @@ export default function SwapWidget({ onCryptoChange, mode = 'buy', onViewHistory
                             : 'text-secondary/50 cursor-not-allowed'
                         }`}
                       >
-                        {t('swap.compareLink', { count: MOCK_PROVIDERS.length })}
+                        {t('swap.compareLink', { count: PROVIDER_IDS.length })}
                       </button>
                     </div>
                   </StaggerItem>
@@ -785,6 +791,7 @@ export default function SwapWidget({ onCryptoChange, mode = 'buy', onViewHistory
           state={provider.state}
           error={provider.error}
           onRetry={provider.retry}
+          checkout={provider.checkoutMode}
           onMessage={provider.handleMessage}
           onClose={provider.close}
           providerName={pickedProviderName(pickedProvider)}
@@ -801,6 +808,7 @@ function pickedProviderName(id) {
   if (id === 'transak') return 'Transak'
   if (id === 'mtpelerin') return 'Mt Pelerin'
   if (id === 'topper') return 'Topper'
+  if (id === 'guardarian') return 'Guardarian'
   return id
 }
 

@@ -27,7 +27,11 @@ import {
   frontendEventToOrderRow as mtpelerinEventToRow,
   getQuote as getMtPelerinQuote,
 } from './providers/mtpelerin.js'
-import { getQuote as getGuardarianQuote } from './providers/guardarian.js'
+import {
+  getQuote as getGuardarianQuote,
+  createTransaction as createGuardarianTransaction,
+  isGuardarianEnabled,
+} from './providers/guardarian.js'
 import {
   authenticate as adminAuthenticate,
   requireAdmin,
@@ -135,6 +139,10 @@ const webhookLimiter = rateLimit({ windowMs: 60_000, max: 60, standardHeaders: t
 const widgetUrlLimiter = rateLimit({ windowMs: 60_000, max: 10, standardHeaders: true, legacyHeaders: false })
 const pushSubscribeLimiter = rateLimit({ windowMs: 60_000, max: 10, standardHeaders: true, legacyHeaders: false })
 const mtpelerinEventLimiter = rateLimit({ windowMs: 60_000, max: 10, standardHeaders: true, legacyHeaders: false })
+// guardarian throttles transaction creation to ~1/min per IP upstream; keep
+// our own gate tight so a burst of clicks doesn't trip their throttle and
+// strand users behind a generic error.
+const guardarianTxLimiter = rateLimit({ windowMs: 60_000, max: 6, standardHeaders: true, legacyHeaders: false })
 // profile sync spends transak partner-api quota on every call — keep it
 // tighter than the local-only endpoints.
 const profileSyncLimiter = rateLimit({ windowMs: 60_000, max: 6, standardHeaders: true, legacyHeaders: false })
@@ -574,6 +582,67 @@ app.post('/api/providers/transak/widget-url', widgetUrlLimiter, async (req, res)
       return res.status(502).json({ error: 'transak_auth_failed' })
     }
     console.error('[transak widget-url] failed:', err?.message)
+    return res.status(502).json({ error: 'upstream_error' })
+  }
+})
+
+// guardarian checkout — create a transaction and hand back guardarian's
+// hosted redirect URL. BUY only (fiat→crypto): the payer finishes on
+// guardarian's regulated page, we never embed it. side effects upstream, so
+// this is gated behind guardarianTxLimiter and strict input validation, and
+// is never reachable from the quote loop.
+app.post('/api/providers/guardarian/transaction', guardarianTxLimiter, async (req, res) => {
+  if (!isGuardarianEnabled()) {
+    return res.status(503).json({ error: 'guardarian_not_configured' })
+  }
+
+  const body = req.body || {}
+  const errors = []
+
+  if (!CURRENCY_RE.test(String(body.cryptoCurrency || ''))) errors.push('cryptoCurrency')
+  if (!CURRENCY_RE.test(String(body.fiatCurrency || ''))) errors.push('fiatCurrency')
+  if (!NETWORK_RE.test(String(body.cryptoNetwork || ''))) errors.push('cryptoNetwork')
+  if (!CUSTOMER_ID_RE.test(String(body.walletAddress || ''))) errors.push('walletAddress')
+  const fiatAmount = body.fiatAmount != null ? Number(body.fiatAmount) : null
+  const fiatOk = fiatAmount != null && Number.isFinite(fiatAmount) && fiatAmount > 0 && fiatAmount <= 1_000_000
+  if (!fiatOk) errors.push('fiatAmount')
+  if (body.partnerOrderId && !ORDER_ID_RE.test(String(body.partnerOrderId))) errors.push('partnerOrderId')
+
+  // redirectURL: a single app-origin URL we trust (same allowlist as transak).
+  // we fan it out into guardarian's { successful, cancelled, failed } so we
+  // never forward three attacker-controlled URLs.
+  let redirects
+  if (body.redirectURL != null) {
+    if (isAllowedRedirectURL(body.redirectURL)) {
+      redirects = { successful: body.redirectURL, cancelled: body.redirectURL, failed: body.redirectURL }
+    } else {
+      errors.push('redirectURL')
+    }
+  }
+
+  if (errors.length) {
+    return res.status(400).json({ error: 'invalid_input', fields: errors })
+  }
+
+  try {
+    const result = await createGuardarianTransaction({
+      fiatCurrency: body.fiatCurrency,
+      cryptoCurrency: body.cryptoCurrency,
+      network: body.cryptoNetwork,
+      fiatAmount,
+      walletAddress: body.walletAddress,
+      partnerOrderId: body.partnerOrderId,
+      redirects,
+    })
+    res.json(result)
+  } catch (err) {
+    if (err?.code === 'not_configured') {
+      return res.status(503).json({ error: 'guardarian_not_configured' })
+    }
+    if (err?.code === 'rate_limited') {
+      return res.status(429).json({ error: 'rate_limited' })
+    }
+    console.error('[guardarian transaction] failed:', err?.message)
     return res.status(502).json({ error: 'upstream_error' })
   }
 })

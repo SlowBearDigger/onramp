@@ -11,16 +11,19 @@ import { assertIsProvider } from './Provider.js'
 import transak from './transak/index.js'
 import mtpelerin from './mtpelerin/index.js'
 import topper from './topper/index.js'
+import guardarian from './guardarian/index.js'
 
 // dev-time shape check. throws at module load if any provider is malformed.
 assertIsProvider(transak, 'transak')
 assertIsProvider(mtpelerin, 'mtpelerin')
 assertIsProvider(topper, 'topper')
+assertIsProvider(guardarian, 'guardarian')
 
 export const PROVIDERS = {
   transak,
   mtpelerin,
   topper,
+  guardarian,
 }
 
 export const PROVIDER_IDS = Object.keys(PROVIDERS)
