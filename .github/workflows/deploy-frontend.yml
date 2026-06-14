@@ -42,10 +42,11 @@ jobs:
 
       - name: Build
         env:
-          # base path = `/<repo-name>/` so assets resolve correctly under
-          # https://<user>.github.io/<repo>/. github.event.repository.name
-          # gives us the repo name without hardcoding.
-          BASE_PATH: /${{ github.event.repository.name }}/
+          # base path = `/` because the site is served from the apex custom
+          # domain (onoff.finance) at the root, not from
+          # <user>.github.io/<repo>/. the CNAME file in public/ pins the
+          # custom domain; github.io/<repo> redirects to it.
+          BASE_PATH: /
           # backend URL — set as a Repository Variable in Settings → Variables.
           # falls through to '/api' (same-origin path) if unset, which only
           # works if you're proxying via a custom domain.
