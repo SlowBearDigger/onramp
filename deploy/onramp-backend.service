@@ -1,0 +1,28 @@
+[Unit]
+Description=OnOff Finance backend (onramp)
+Documentation=https://github.com/SlowBearDigger/onramp
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=onramp
+Group=onramp
+WorkingDirectory=/opt/onramp/backend
+# secrets + config are loaded from /opt/onramp/backend/.env by dotenv
+# (app.js does `import 'dotenv/config'`), so no EnvironmentFile is needed.
+Environment=NODE_ENV=production
+ExecStart=/usr/bin/node app.js
+Restart=on-failure
+RestartSec=3
+
+# --- hardening ---
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+# the SQLite DB lives here and must stay writable (see DB_PATH in .env)
+ReadWritePaths=/var/lib/onramp
+
+[Install]
+WantedBy=multi-user.target

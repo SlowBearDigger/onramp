@@ -26,3 +26,6 @@ backend/.env
 .idea/
 *.swp
 txt.txt
+
+# local-only: client gap analysis (has business/regulatory notes — never publish)
+docs/LAUNCH_CHECKLIST.md

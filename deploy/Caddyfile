@@ -1,0 +1,12 @@
+# OnOff Finance backend — reverse proxy with automatic HTTPS.
+#
+# Caddy fetches + auto-renews a Let's Encrypt cert for api.onoff.finance and
+# proxies to the Node service on localhost:3001. No certbot, no cron.
+#
+# Install to /etc/caddy/Caddyfile, then: systemctl reload caddy
+# (the setup script does this for you.)
+
+api.onoff.finance {
+	encode zstd gzip
+	reverse_proxy 127.0.0.1:3001
+}
