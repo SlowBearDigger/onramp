@@ -1,13 +1,13 @@
 name: Deploy frontend to GitHub Pages
 
 # Auto-deploys the Vite-built static frontend to GitHub Pages on every push
-# to main. The backend lives elsewhere (Render free tier — see render.yaml)
-# and is reached via VITE_API_BASE_URL injected at build time.
+# to main. The backend runs on the OnOff VPS and is reached through
+# VITE_API_BASE_URL injected at build time.
 #
 # Setup once per repo:
 #   1. Repo Settings → Pages → "Source" = "GitHub Actions"
 #   2. Repo Settings → Secrets and variables → Actions → Variables → New
-#      repository variable: VITE_API_BASE_URL = https://<your-render-app>.onrender.com
+#      repository variable: VITE_API_BASE_URL = https://api.onoff.finance
 #   3. Push to main. Pages URL: https://<user>.github.io/<repo>/
 
 on:
