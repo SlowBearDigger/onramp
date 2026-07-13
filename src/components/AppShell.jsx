@@ -1,8 +1,10 @@
+import { Suspense } from 'react'
 import { useLocation, useOutlet } from 'react-router-dom'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import Sidebar from './Sidebar'
 import BottomNav from './BottomNav'
 import OnboardingTour from './OnboardingTour'
+import RouteFallback from './RouteFallback'
 
 export function getAppContentKey(pathname) {
   if (pathname === '/buy' || pathname === '/sell' || pathname === '/history') return '/ramp'
@@ -32,7 +34,9 @@ export default function AppShell() {
           exit={reduceMotion ? { opacity: 1 } : { opacity: 0, y: -8 }}
           transition={transition}
         >
-          {outlet}
+          <Suspense fallback={<RouteFallback />}>
+            {outlet}
+          </Suspense>
         </motion.div>
       </AnimatePresence>
       <BottomNav />

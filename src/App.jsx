@@ -2,11 +2,11 @@ import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { AnimatePresence } from 'motion/react'
-import { CircleNotch } from '@phosphor-icons/react'
 import { ThemeProvider } from './context/ThemeContext'
 import ErrorBoundary from './components/ErrorBoundary'
 import Header from './components/Header'
 import AppShell from './components/AppShell'
+import RouteFallback from './components/RouteFallback'
 import PageTransition from './components/PageTransition'
 import PrivacyDisclosure from './components/PrivacyDisclosure'
 import LandingPage from './pages/LandingPage'
@@ -36,28 +36,13 @@ const AdminLayout = lazy(() => import('./pages/admin/AdminLayout'))
 const AdminLoginPage = lazy(() => import('./pages/admin/LoginPage'))
 const AdminDashboardPage = lazy(() => import('./pages/admin/DashboardPage'))
 
-// minimal centered spinner for Suspense fallback. role=status announces
-// "Loading…" to screen readers without spamming on every navigation.
-function RouteFallback() {
-  const { t } = useTranslation()
-  return (
-    <div
-      role="status"
-      aria-live="polite"
-      className="min-h-[60vh] flex items-center justify-center text-secondary"
-    >
-      <CircleNotch size={20} weight="bold" className="animate-spin mr-2" aria-hidden="true" />
-      <span>{t('common.loading')}</span>
-    </div>
-  )
-}
-
 // "app surface" routes — the in-app product (Buy/Sell/Swap/History/...).
 // they share Sidebar + BottomNav for nav, hide the public marketing
 // Header, and group under one pageKey so AnimatePresence cross-fades
 // only on entering/leaving the app surface (not on internal flips).
 const APP_PATHS = ['/buy', '/sell', '/history', '/swap', '/pay']
 const isAppPath = (p) => APP_PATHS.some((r) => p === r || p.startsWith(r + '/'))
+const isE2E = import.meta.env.VITE_E2E === 'true'
 
 function AnimatedRoutes() {
   const location = useLocation()
@@ -116,7 +101,7 @@ function AnimatedRoutes() {
       {/* GDPR disclosure — public surface only. admin has its own login
           gate so a banner there would be redundant noise. /privacy is also
           excluded so the banner doesn't appear on top of the policy itself. */}
-      {location.pathname !== '/privacy' && <PrivacyDisclosure />}
+      {!isE2E && location.pathname !== '/privacy' && <PrivacyDisclosure />}
     </>
   )
 }
