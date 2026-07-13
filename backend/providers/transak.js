@@ -169,6 +169,13 @@ const TRANSAK_API_BASE_STAGING = 'https://api-gateway-stg.transak.com'
 const TRANSAK_API_BASE_PROD = 'https://api-gateway.transak.com'
 const TRANSAK_PUBLIC_API_STAGING = 'https://api-stg.transak.com'
 const TRANSAK_PUBLIC_API_PROD = 'https://api.transak.com'
+const TRANSAK_NETWORK_MAP = {
+  bitcoin: 'mainnet',
+  ripple: 'mainnet',
+  cardano: 'mainnet',
+  dogecoin: 'mainnet',
+  polkadot: 'mainnet',
+}
 
 function transakApiBase() {
   return (process.env.TRANSAK_ENV || 'STAGING').toUpperCase() === 'PRODUCTION'
@@ -212,7 +219,7 @@ export async function fetchPublicQuote({
     cryptoCurrency,
     fiatAmount: String(fiatAmount),
     isBuyOrSell,
-    network,
+    network: TRANSAK_NETWORK_MAP[network] || network,
   })
   const ac = new AbortController()
   const timer = setTimeout(() => ac.abort(), 5000)

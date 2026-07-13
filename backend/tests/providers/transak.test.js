@@ -266,6 +266,7 @@ describe('Transak mandatory API headers', () => {
     const [url, options] = fetch.mock.calls[0]
     const parsed = new URL(url)
     expect(parsed.searchParams.get('partnerApiKey')).toBe('test-api-key')
+    expect(parsed.searchParams.get('network')).toBe('mainnet')
     expect(options.headers['x-api-key']).toBe('test-api-key')
     expect(options.headers['x-user-ip']).toBe('203.0.113.42')
   })
