@@ -78,9 +78,9 @@ function AnimatedRoutes() {
               <Route path="/privacy" element={<PrivacyPage />} />
               <Route path="/terms" element={<TermsPage />} />
               <Route element={<AppShell />}>
-                <Route path="/buy" element={<SwapPage />} />
-                <Route path="/sell" element={<SwapPage />} />
-                <Route path="/history" element={<SwapPage />} />
+                <Route path="/buy" element={<SwapPage view="ramp" mode="buy" />} />
+                <Route path="/sell" element={<SwapPage view="ramp" mode="sell" />} />
+                <Route path="/history" element={<SwapPage view="history" mode="buy" />} />
                 <Route path="/swap" element={<SwapKitPage />} />
                 <Route path="/pay" element={<PayRecipientPage />} />
               </Route>

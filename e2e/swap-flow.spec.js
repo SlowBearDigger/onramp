@@ -20,6 +20,64 @@ async function dismissBanner(page) {
   }
 }
 
+function sampleMotion(selector) {
+  window.__onrampMotionSamples = []
+
+  const sample = () => {
+    const target = document.querySelector(selector)
+    let node = target
+
+    while (node && node !== document.body) {
+      const style = getComputedStyle(node)
+      const matrix = style.transform === 'none'
+        ? null
+        : new DOMMatrixReadOnly(style.transform)
+
+      if (node.style.transform || node.style.translate || node.style.opacity || matrix) {
+        window.__onrampMotionSamples.push({
+          opacity: Number(style.opacity),
+          translate: style.translate,
+          x: matrix?.m41 || 0,
+          y: matrix?.m42 || 0,
+          z: matrix?.m43 || 0,
+        })
+      }
+
+      node = node.parentElement
+    }
+
+    window.__onrampMotionFrame = requestAnimationFrame(sample)
+  }
+
+  sample()
+}
+
+async function startMotionSampler(page, targetSelector) {
+  await page.evaluate(sampleMotion, targetSelector)
+}
+
+async function installInitialMotionSampler(page, targetSelector) {
+  await page.addInitScript(sampleMotion, targetSelector)
+}
+
+async function readMotionSamples(page) {
+  return page.evaluate(() => {
+    cancelAnimationFrame(window.__onrampMotionFrame)
+    return window.__onrampMotionSamples
+  })
+}
+
+function hasPositionalMotion(sample) {
+  const individualTranslate = sample.translate === 'none'
+    ? []
+    : sample.translate.match(/-?\d*\.?\d+/g)?.map(Number) || []
+
+  return Math.abs(sample.x) > 0.01 ||
+    Math.abs(sample.y) > 0.01 ||
+    Math.abs(sample.z) > 0.01 ||
+    individualTranslate.some((value) => Math.abs(value) > 0.01)
+}
+
 test('amount input survives buy↔sell tab flip', async ({ page }) => {
   await page.goto('buy')
   await dismissBanner(page)
@@ -38,6 +96,85 @@ test('amount input survives buy↔sell tab flip', async ({ page }) => {
   // value should still be there since the widget stays mounted across
   // mode flips. this regressed twice during the route refactor.
   await expect(amountInput).toHaveValue('250')
+})
+
+test('exiting sell view never mutates to buy during app-section navigation', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 })
+  await page.goto('sell')
+  await dismissBanner(page)
+  await expect(page.getByRole('tab', { name: 'Sell' })).toHaveAttribute('aria-selected', 'true')
+
+  await page.evaluate(() => {
+    window.__onrampRampModes = []
+
+    const sample = () => {
+      const selectedTab = document.querySelector('[role="tab"][aria-selected="true"]')
+      if (selectedTab) window.__onrampRampModes.push(selectedTab.textContent.trim())
+      window.__onrampRampModeFrame = requestAnimationFrame(sample)
+    }
+
+    sample()
+  })
+
+  await page.getByRole('link', { name: 'Swap', exact: true }).click()
+  await expect(page).toHaveURL(/\/swap$/)
+  await expect(page.getByRole('heading', { name: /swap/i }).first()).toBeVisible()
+
+  const sampledModes = await page.evaluate(() => {
+    cancelAnimationFrame(window.__onrampRampModeFrame)
+    return window.__onrampRampModes
+  })
+
+  expect(sampledModes.length).toBeGreaterThan(1)
+  expect(sampledModes).not.toContain('Buy')
+  expect(new Set(sampledModes)).toEqual(new Set(['Sell']))
+})
+
+test('reduced motion removes positional animation from buy→history', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto('buy')
+  await dismissBanner(page)
+  await expect(page.getByRole('tablist')).toBeVisible()
+  await startMotionSampler(page, '[role="tablist"]')
+
+  await page.getByRole('link', { name: 'History', exact: true }).click()
+  await expect(page.getByRole('heading', { name: /Transaction History/i })).toBeVisible()
+
+  const samples = await readMotionSamples(page)
+  expect(samples.length).toBeGreaterThan(1)
+  expect(samples.every((sample) => Number.isFinite(sample.opacity))).toBe(true)
+  expect(samples.some(hasPositionalMotion)).toBe(false)
+  expect(samples.every((sample) => sample.opacity === 1)).toBe(true)
+})
+
+test('reduced motion removes positional animation from initial SwapKit content', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await installInitialMotionSampler(page, 'input[aria-label="You pay"]')
+  await page.goto('swap')
+  const payInput = page.getByRole('textbox', { name: 'You pay' })
+  await expect(payInput).toBeVisible()
+  await page.waitForTimeout(800)
+
+  const samples = await readMotionSamples(page)
+  expect(samples.length).toBeGreaterThan(1)
+  expect(samples.every((sample) => Number.isFinite(sample.opacity))).toBe(true)
+  expect(samples.some(hasPositionalMotion)).toBe(false)
+  expect(samples.every((sample) => sample.opacity === 1)).toBe(true)
+})
+
+test('normal motion keeps the buy→history positional transition', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' })
+  await page.goto('buy')
+  await dismissBanner(page)
+  await expect(page.getByRole('tablist')).toBeVisible()
+  await startMotionSampler(page, '[role="tablist"]')
+
+  await page.getByRole('link', { name: 'History', exact: true }).click()
+  await expect(page.getByRole('heading', { name: /Transaction History/i })).toBeVisible()
+
+  const samples = await readMotionSamples(page)
+  expect(samples.length).toBeGreaterThan(1)
+  expect(samples.some(hasPositionalMotion)).toBe(true)
 })
 
 test('history view renders an actionable state without backend connectivity', async ({ page }) => {

@@ -56,13 +56,19 @@ const staggerItemVariants = {
   },
 }
 
+const reducedStaggerItemVariants = {
+  hidden: { opacity: 1, y: 0 },
+  visible: { opacity: 1, y: 0, transition: instant },
+}
+
 export function Stagger({ children, stagger = 0.1, className = '', ...props }) {
+  const prefersReduced = useReducedMotion()
   return (
     <motion.div
-      initial="hidden"
+      initial={prefersReduced ? false : 'hidden'}
       whileInView="visible"
       viewport={{ once: true, margin: '-60px' }}
-      custom={stagger}
+      custom={prefersReduced ? 0 : stagger}
       variants={staggerVariants}
       className={className}
       {...props}
@@ -73,8 +79,13 @@ export function Stagger({ children, stagger = 0.1, className = '', ...props }) {
 }
 
 export function StaggerItem({ children, className = '', ...props }) {
+  const prefersReduced = useReducedMotion()
   return (
-    <motion.div variants={staggerItemVariants} className={className} {...props}>
+    <motion.div
+      variants={prefersReduced ? reducedStaggerItemVariants : staggerItemVariants}
+      className={className}
+      {...props}
+    >
       {children}
     </motion.div>
   )

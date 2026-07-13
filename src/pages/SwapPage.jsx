@@ -1,6 +1,6 @@
 import { useState, lazy, Suspense } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
-import { AnimatePresence, motion } from 'motion/react'
+import { useNavigate } from 'react-router-dom'
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { CircleNotch } from '@phosphor-icons/react'
 import ReactiveBlobs from '../components/ReactiveBlobs'
 import SwapWidget from '../components/SwapWidget'
@@ -11,27 +11,14 @@ import { CRYPTOS } from '../config/cryptos'
 // lazy loading. SwapWidget is the primary view so it stays eager.
 const HistoryView = lazy(() => import('../components/HistoryView'))
 
-// derive `view` and `mode` from the current pathname. keeping this pure
-// makes the routing decision testable and predictable — no nested route
-// elements to chase, no Outlet context to thread.
-//
-// route map:
-//   /history  → history view
-//   /sell     → ramp form, sell mode
-//   /buy      → ramp form, buy mode (default)
-//   anything else (legacy /swap/* redirects) → buy
-function deriveRampState(pathname) {
-  if (pathname === '/history') return { view: 'history', mode: 'buy' }
-  if (pathname === '/sell') return { view: 'ramp', mode: 'sell' }
-  return { view: 'ramp', mode: 'buy' }
-}
-
-export default function SwapPage() {
+export default function SwapPage({ view, mode }) {
   const [activeCrypto, setActiveCrypto] = useState(CRYPTOS[0])
   const [warpPhase, setWarpPhase] = useState('idle')
   const navigate = useNavigate()
-  const location = useLocation()
-  const { view, mode } = deriveRampState(location.pathname)
+  const reduceMotion = useReducedMotion()
+  const transition = reduceMotion ? { duration: 0 } : { duration: 0.2 }
+  const initial = reduceMotion ? { opacity: 1 } : { opacity: 0, y: 8 }
+  const exit = reduceMotion ? { opacity: 1 } : { opacity: 0, y: -8 }
 
   return (
     <>
@@ -46,10 +33,10 @@ export default function SwapPage() {
             {view === 'ramp' ? (
               <motion.div
                 key="ramp"
-                initial={{ opacity: 0, y: 8 }}
+                initial={initial}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.2 }}
+                exit={exit}
+                transition={transition}
               >
                 <SwapWidget
                   mode={mode}
@@ -61,10 +48,10 @@ export default function SwapPage() {
             ) : (
               <motion.div
                 key="history"
-                initial={{ opacity: 0, y: 8 }}
+                initial={initial}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.2 }}
+                exit={exit}
+                transition={transition}
               >
                 <Suspense fallback={
                   <div role="status" className="flex items-center justify-center py-16 text-secondary">
