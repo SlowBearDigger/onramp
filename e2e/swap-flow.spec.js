@@ -14,10 +14,14 @@ import { test, expect } from '@playwright/test'
 // pointer events targeting the form.
 async function dismissBanner(page) {
   const banner = page.getByRole('region', { name: /privacy/i })
-  if (await banner.isVisible({ timeout: 2000 }).catch(() => false)) {
-    await banner.getByRole('button', { name: 'Got it' }).click()
-    await expect(banner).not.toBeVisible()
+  try {
+    await banner.waitFor({ state: 'visible', timeout: 2000 })
+  } catch {
+    return
   }
+
+  await banner.getByRole('button', { name: 'Got it' }).click()
+  await expect(banner).not.toBeVisible()
 }
 
 function sampleMotion(selector) {
