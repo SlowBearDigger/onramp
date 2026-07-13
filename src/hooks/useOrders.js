@@ -1,18 +1,29 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { API_BASE } from '../config/api'
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001'
 const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true'
-const LAST_WALLET_KEY = 'onramp:last-wallet'
+const ORDER_ACCESS_KEY = 'onramp:order-access'
+const ORDER_ACCESS_EVENT = 'onoff:order-access-changed'
+const MAX_ACCESS_IDS = 200
 
-// remember the most recent wallet the user has used so HistoryView has a
-// customerId to query with. called by useProvider.startOrder.
-export function rememberWallet(addr) {
-  if (typeof addr !== 'string' || addr.length < 6) return
-  try { localStorage.setItem(LAST_WALLET_KEY, addr) } catch { /* storage disabled */ }
+export function readOrderAccessIds() {
+  try {
+    const value = JSON.parse(localStorage.getItem(ORDER_ACCESS_KEY) || '[]')
+    return Array.isArray(value)
+      ? value.filter((id) => typeof id === 'string').slice(0, MAX_ACCESS_IDS)
+      : []
+  } catch {
+    return []
+  }
 }
 
-export function readLastWallet() {
-  try { return localStorage.getItem(LAST_WALLET_KEY) || null } catch { return null }
+export function rememberOrderAccess(accessId) {
+  if (typeof accessId !== 'string' || accessId.length < 6) return
+  try {
+    const next = [accessId, ...readOrderAccessIds().filter((id) => id !== accessId)].slice(0, MAX_ACCESS_IDS)
+    localStorage.setItem(ORDER_ACCESS_KEY, JSON.stringify(next))
+    window.dispatchEvent(new Event(ORDER_ACCESS_EVENT))
+  } catch { /* storage disabled */ }
 }
 
 // canonical "in-flight" raw statuses across all providers — covers transak's
@@ -100,9 +111,8 @@ export function toUiShape(row) {
 // backend is unreachable we surface the error explicitly (state='error') —
 // we do NOT swap to mock data silently because that hides outages from the
 // user and from support.
-export function useOrders({ customerId } = {}) {
-  // if the caller didn't pass one, fall back to the last-used wallet.
-  const effectiveCustomerId = customerId || readLastWallet()
+export function useOrders() {
+  const [accessIds, setAccessIds] = useState(() => readOrderAccessIds())
   const [orders, setOrders] = useState([])
   const [state, setState] = useState('idle') // idle | loading | ready | error | mock
   const [error, setError] = useState(null)
@@ -110,12 +120,16 @@ export function useOrders({ customerId } = {}) {
   const [isPolling, setIsPolling] = useState(false)
   const timerRef = useRef(null)
   const abortRef = useRef(null)
-  // wallet we already ran the partner-api sync for. the first fetch per
-  // wallet goes through /api/profile/orders (backend reconciles against
-  // transak's partner api, then returns the merged view); every poll after
-  // that stays on the local-only /api/orders so we never burn upstream
-  // quota in the 5s loop.
-  const syncedForRef = useRef(null)
+
+  useEffect(() => {
+    const refreshAccess = () => setAccessIds(readOrderAccessIds())
+    window.addEventListener(ORDER_ACCESS_EVENT, refreshAccess)
+    window.addEventListener('storage', refreshAccess)
+    return () => {
+      window.removeEventListener(ORDER_ACCESS_EVENT, refreshAccess)
+      window.removeEventListener('storage', refreshAccess)
+    }
+  }, [])
 
   const fetchOnce = useCallback(async () => {
     if (USE_MOCK) {
@@ -126,9 +140,7 @@ export function useOrders({ customerId } = {}) {
       return
     }
 
-    // require a customerId before calling the API — matches the backend
-    // contract (no global listing allowed).
-    if (!effectiveCustomerId) {
+    if (accessIds.length === 0) {
       setOrders([])
       setState('ready')
       return
@@ -141,23 +153,12 @@ export function useOrders({ customerId } = {}) {
 
     setState((s) => (s === 'ready' ? 'ready' : 'loading'))
     try {
-      const wantSync = syncedForRef.current !== effectiveCustomerId
-      let r
-      if (wantSync) {
-        r = await fetch(
-          `${API_BASE}/api/profile/orders?walletAddress=${encodeURIComponent(effectiveCustomerId)}`,
-          { signal: ac.signal },
-        )
-        // mark synced even when the upstream reconciliation was partial —
-        // the endpoint degrades to the local view by itself. only a hard
-        // failure (rate limit, network, old backend without the route)
-        // falls through to the plain orders endpoint below.
-        if (r.ok) syncedForRef.current = effectiveCustomerId
-      }
-      if (!wantSync || !r.ok) {
-        const qs = `?customerId=${encodeURIComponent(effectiveCustomerId)}`
-        r = await fetch(`${API_BASE}/api/orders${qs}`, { signal: ac.signal })
-      }
+      const r = await fetch(`${API_BASE}/api/orders/history`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ accessIds }),
+        signal: ac.signal,
+      })
       if (!r.ok) throw new Error(`HTTP ${r.status}`)
       const body = await r.json()
       const mapped = (body.orders || []).map(toUiShape)
@@ -175,7 +176,7 @@ export function useOrders({ customerId } = {}) {
       setState('error')
       setError(err)
     }
-  }, [effectiveCustomerId])
+  }, [accessIds])
 
   useEffect(() => {
     fetchOnce()

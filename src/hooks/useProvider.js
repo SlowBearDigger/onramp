@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { getProvider } from '../providers/index.js'
-import { rememberWallet } from './useOrders'
+import { rememberOrderAccess } from './useOrders'
+import { API_BASE } from '../config/api'
 
 // stable UUIDv4. prefer crypto.randomUUID() (safari 15.4+, all modern browsers
 // in HTTPS/localhost context). fallback uses crypto.getRandomValues() — never
@@ -20,8 +21,6 @@ function generateUUID() {
   }
   throw new Error('generateUUID: no secure random source available')
 }
-
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001'
 
 // generic provider widget orchestration.
 //
@@ -102,7 +101,7 @@ export function useProvider({ onSuccess, onFailure, onClose } = {}) {
     try {
       const bootstrap = await provider.getBootstrap(params)
       const url = provider.buildWidgetUrl(params, bootstrap)
-      rememberWallet(walletAddress)
+      rememberOrderAccess(orderId)
       setWidgetUrl(url)
       setState('widget-open')
       return orderId

@@ -2,17 +2,16 @@ import { useState, useEffect, useRef } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from 'motion/react'
-import { CreditCard, ArrowsLeftRight, ClockCounterClockwise, Sun, Moon, Gear, Swap } from '@phosphor-icons/react'
+import { CreditCard, ArrowsLeftRight, ClockCounterClockwise, Sun, Moon, Gear, Swap, PaperPlaneTilt } from '@phosphor-icons/react'
 import { useTheme } from '../context/ThemeContext'
 import { SUPPORTED_LANGUAGES } from '../i18n'
+import { PAY_ENABLED } from '../config/features'
 
 // mobile bottom nav.
 //
-// layout: five equal-width columns. four primary tabs
-// (Buy/Sell/Swap/History) + one Settings button. settings opens a
-// popover with theme + language inside, keeping the bar focused on
-// navigation. five flex columns means the bar stays symmetrical even
-// when the labels' translated lengths vary across locales.
+// layout: five equal-width primary tabs plus a compact Settings icon.
+// settings opens a popover with theme + language while Buy/Sell/Pay/Swap/
+// History remain one tap away.
 //
 // perf notes for ios:
 //   - backdrop-blur-sm (4px) instead of md (12px). md hits a known
@@ -29,6 +28,7 @@ export default function BottomNav() {
   const tabs = [
     { Icon: CreditCard, label: t('swap.tabs.buy'), to: '/buy' },
     { Icon: ArrowsLeftRight, label: t('swap.tabs.sell'), to: '/sell' },
+    ...(PAY_ENABLED ? [{ Icon: PaperPlaneTilt, label: t('pay.title', { defaultValue: 'Pay' }), to: '/pay', shortLabel: 'Pay' }] : []),
     { Icon: Swap, label: t('swap.tabs.swap', { defaultValue: 'Swap' }), to: '/swap' },
     { Icon: ClockCounterClockwise, label: t('history.title'), to: '/history', shortLabel: 'History' },
   ]
@@ -81,26 +81,19 @@ export default function BottomNav() {
           )
         })}
 
-        {/* settings — fourth equal-width column. opens a popover with
-            theme + language. stays as a tab visually (icon + label) so
-            the bar reads as a uniform 4-column grid. */}
-        <div ref={settingsWrapRef} className="flex-1 min-w-0 relative">
+        <div ref={settingsWrapRef} className="w-12 shrink-0 relative">
           <button
             type="button"
             onClick={() => setSettingsOpen((v) => !v)}
             aria-haspopup="dialog"
             aria-expanded={settingsOpen}
             aria-label={t('settings.label')}
-            className="w-full"
+            className="w-full h-full min-h-12 flex items-center justify-center rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+            title={t('settings.label')}
           >
-            <div className="flex flex-col items-center gap-0.5 py-1.5 rounded-xl">
-              <span className={`inline-flex ${settingsOpen ? 'text-primary' : 'text-secondary'}`}>
-                <Gear size={22} weight="bold" />
-              </span>
-              <span className={`text-[11px] font-semibold truncate max-w-full px-1 ${settingsOpen ? 'text-primary' : 'text-secondary'}`}>
-                {t('settings.label')}
-              </span>
-            </div>
+            <span className={`inline-flex ${settingsOpen ? 'text-primary' : 'text-secondary'}`}>
+              <Gear size={22} weight="bold" />
+            </span>
           </button>
 
           <AnimatePresence>

@@ -14,11 +14,11 @@
 // using ES256 — see backend/providers/topper.js). frontend postMessage events
 // are informational only; treat the webhook as source of truth.
 
+import { API_BASE } from '../../config/api'
+
 const TOPPER_CONFIG = {
   environment: import.meta.env.VITE_TOPPER_ENV || 'STAGING',
 }
-
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001'
 
 const TOPPER_ORIGINS = [
   'https://app.sandbox.topperpay.com',

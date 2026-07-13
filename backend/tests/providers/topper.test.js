@@ -7,7 +7,7 @@ import { generateKeyPair, exportJWK, FlattenedSign } from 'jose'
 // module instance — required because topper.js caches the imported keys in
 // module-scope promises.
 async function bootTopperWith({ widgetId = 'wid_test', keyId = 'kid_test' } = {}) {
-  const { publicKey, privateKey } = await generateKeyPair('ES256')
+  const { publicKey, privateKey } = await generateKeyPair('ES256', { extractable: true })
   const privateJwk = await exportJWK(privateKey)
   const publicJwk = await exportJWK(publicKey)
   privateJwk.alg = 'ES256'

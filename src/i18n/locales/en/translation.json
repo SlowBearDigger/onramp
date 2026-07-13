@@ -2,7 +2,7 @@
   "privacyDisclosure": {
     "aria": "Privacy disclosure",
     "title": "Your privacy",
-    "body": "We don't run analytics or advertising trackers. Your wallet address, theme, and recent activity are stored locally in this browser only.",
+    "body": "We don't run analytics or advertising trackers. Preferences and random order access IDs are stored only in this browser.",
     "readMore": "Read the policy",
     "cta": "Got it",
     "dismiss": "Dismiss"
@@ -276,7 +276,7 @@
     }
   },
   "history": {
-    "localStorageNotice": "Your last-used wallet address is remembered in this browser so we can show your history without an account. Clear browser data or switch device to reset.",
+    "localStorageNotice": "This browser keeps random access IDs for orders created here. Clear browser data or switch devices and those orders will no longer appear.",
     "title": "Transaction History",
     "count_one": "{{count}} transaction",
     "count_other": "{{count}} transactions",

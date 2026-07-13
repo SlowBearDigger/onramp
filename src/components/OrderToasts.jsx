@@ -7,9 +7,8 @@ import { useOrders } from '../hooks/useOrders'
 // in-app order status toasts.
 //
 // listens to useOrders' polling output and fires a toast whenever an
-// order's rawStatus transitions. complements OS-level web push (which
-// fires when the app is closed) by giving immediate visual feedback
-// while the user has the app open. no permission needed.
+// order's rawStatus transitions and gives immediate visual feedback while
+// the user has the app open. no permission needed.
 //
 // transitions we surface (most-noisy → least):
 //   AWAITING_PAYMENT_FROM_USER → PAYMENT_DONE_MARKED_BY_USER
@@ -18,8 +17,7 @@ import { useOrders } from '../hooks/useOrders'
 //
 // also fires on first appearance of an order if its status is already
 // in a "interesting" state (PROCESSING, COMPLETED, FAILED) — covers the
-// case where the user navigates to /swap/history with a fresh wallet
-// that already had orders queued.
+// case where the browser receives a newly accessible order already in flight.
 
 const SUCCESS_STATUSES = new Set(['COMPLETED'])
 const FAILURE_STATUSES = new Set(['FAILED', 'EXPIRED', 'CANCELLED', 'REFUNDED'])

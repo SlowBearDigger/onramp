@@ -10,7 +10,7 @@ import { X, ShieldCheck } from '@phosphor-icons/react'
 // this is NOT a "consent gate" — there is nothing to consent to. we don't
 // run third-party analytics, advertising trackers, or cross-site cookies.
 // the banner discloses the strictly-functional localStorage we DO use
-// (theme, language, last-used wallet, transaction history snapshots) so a
+// (theme, language, and random order access IDs) so a
 // privacy-conscious user knows what's happening before they interact.
 //
 // GDPR §3.3 of the spec asks for "minimal data collection, privacy policy".

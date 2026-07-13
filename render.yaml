@@ -43,6 +43,8 @@ services:
       - key: NODE_VERSION
         value: '20'
       # PORT is auto-injected by Render; our app reads process.env.PORT.
+      - key: HOST
+        value: 0.0.0.0
       - key: TRANSAK_ENV
         value: STAGING
       - key: TRANSAK_WEBHOOK_INSECURE
@@ -71,12 +73,4 @@ services:
       - key: ADMIN_PASSWORD_HASH
         sync: false
       - key: ADMIN_JWT_SECRET
-        sync: false
-      # web push — set BOTH or NEITHER. generate keys with:
-      #   node -e "console.log(require('web-push').generateVAPIDKeys())"
-      - key: VAPID_PUBLIC_KEY
-        sync: false
-      - key: VAPID_PRIVATE_KEY
-        sync: false
-      - key: VAPID_CONTACT
         sync: false

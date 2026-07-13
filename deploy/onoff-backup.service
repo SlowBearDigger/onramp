@@ -1,0 +1,13 @@
+[Unit]
+Description=OnOff Finance consistent application backup
+After=onramp-backend.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/libexec/onoff/backup
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/var/backups/onoff
+ReadOnlyPaths=/var/lib/onramp /etc/onoff /etc/caddy

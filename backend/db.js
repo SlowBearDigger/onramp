@@ -102,33 +102,26 @@ export function upsertOrder(row) {
   })
 }
 
-const listByCustomerStmt = db.prepare(`
-  SELECT * FROM orders
-  WHERE customer_id = ?
-  ORDER BY updated_at DESC
-  LIMIT 100
-`)
+const HISTORY_COLUMNS = `
+  id, provider, unverified, partner_order_id, status, product,
+  fiat_currency, fiat_amount, crypto_currency, crypto_amount,
+  wallet_address, network, tx_hash, created_at, updated_at
+`
 
-const listByCustomerAndProviderStmt = db.prepare(`
-  SELECT * FROM orders
-  WHERE customer_id = ? AND provider = ?
-  ORDER BY updated_at DESC
-  LIMIT 100
-`)
-
-const getByIdStmt = db.prepare(`SELECT * FROM orders WHERE id = ?`)
-
-// customerId is required by the API layer; this function intentionally has
-// no "list all orders" fallback to prevent accidental global enumeration.
-// optional provider filter for analytics / per-provider history views.
-export function listOrders({ customerId, provider } = {}) {
-  if (!customerId) return []
-  if (provider) return listByCustomerAndProviderStmt.all(customerId, provider)
-  return listByCustomerStmt.all(customerId)
-}
-
-export function getOrderById(id) {
-  return getByIdStmt.get(id)
+// History is a capability-based lookup. partner_order_id is generated from a
+// cryptographically random UUID in the browser and never exposed by a public
+// listing endpoint. Keep the projection explicit so provider payloads and
+// customer identifiers cannot leak through this user-facing API.
+export function listOrdersByAccessIds(accessIds = []) {
+  if (!Array.isArray(accessIds) || accessIds.length === 0) return []
+  const placeholders = accessIds.map(() => '?').join(', ')
+  return db.prepare(`
+    SELECT ${HISTORY_COLUMNS}
+    FROM orders
+    WHERE partner_order_id IN (${placeholders})
+    ORDER BY updated_at DESC
+    LIMIT 200
+  `).all(...accessIds)
 }
 
 export { db }

@@ -70,10 +70,12 @@ backend (which receives signed webhooks from each provider). Each row has:
   (mempool.space for BTC, etherscan.io for ETH, polygonscan for
   Polygon, etc.). Clicking opens it in a new tab.
 
-The list is **per wallet address**. If you switch to a different wallet
-in your next purchase, that wallet's history won't show until you've
-used it. Clearing browser data or switching device resets the
-last-used wallet.
+The list is **per browser**. Each order creates a random access ID stored
+locally after the provider widget opens. Clearing browser data or switching
+devices removes those access IDs, so that device can no longer request the
+history. A wallet address alone is not enough to retrieve orders. Browsers
+from versions that predate access IDs cannot automatically import their old
+wallet-based history because doing so would reintroduce public wallet lookup.
 
 ## Settings
 
@@ -96,15 +98,14 @@ On desktop, look for an install icon in the URL bar (Chrome / Edge).
 ## Privacy
 
 - No account creation. The app cannot identify you across devices.
-- The only thing stored locally is your last-used wallet, theme,
-  language, and the privacy-disclosure dismissal flag — all in
-  `localStorage` only.
+- The browser stores random order access IDs, theme,
+  language, and the privacy-disclosure dismissal flag in `localStorage`.
 - The provider you pick handles KYC and payment. They have their own
   privacy policies. OnRamp never sees your government ID or bank
   details — those go directly to the provider's widget.
-- Order history on the backend uses your wallet address as the
-  identifier. We don't link wallets to email or phone unless you
-  explicitly enter them in a provider's widget.
+- Order history requests use random order access IDs, not a public wallet
+  lookup. The provider still receives the destination wallet inside its
+  hosted widget.
 - See the full privacy policy at `/privacy` and terms at `/terms`.
 
 ## Help

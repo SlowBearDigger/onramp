@@ -14,7 +14,7 @@
 // legal posture: guardarian (the regulated party) takes the money and
 // delivers the crypto; we only originate the transaction and link out.
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001'
+import { API_BASE } from '../../config/api'
 
 const guardarian = {
   getMetadata() {

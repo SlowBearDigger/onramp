@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { createContext, createElement, useState, useEffect, useCallback, useContext, useRef } from 'react'
+import { API_BASE } from '../config/api'
 
 // admin auth state. holds the JWT in memory + localStorage. enforces a
 // 30-minute idle auto-logout (the backend JWT itself is valid 60 minutes
@@ -10,7 +11,7 @@ const EXPIRES_KEY = 'offramp:admin:expiresAt'
 const USERNAME_KEY = 'offramp:admin:username'
 const IDLE_TIMEOUT_MS = 30 * 60 * 1000
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001'
+const AdminAuthContext = createContext(null)
 
 function readStored() {
   try {
@@ -41,7 +42,7 @@ function clearStored() {
   } catch { /* ignore */ }
 }
 
-export function useAdminAuth() {
+function useAdminAuthState() {
   const [session, setSession] = useState(() => readStored())
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
@@ -174,4 +175,15 @@ export function useAdminAuth() {
     logout,
     authFetch,
   }
+}
+
+export function AdminAuthProvider({ children }) {
+  const value = useAdminAuthState()
+  return createElement(AdminAuthContext.Provider, { value }, children)
+}
+
+export function useAdminAuth() {
+  const value = useContext(AdminAuthContext)
+  if (!value) throw new Error('useAdminAuth must be used within AdminAuthProvider')
+  return value
 }

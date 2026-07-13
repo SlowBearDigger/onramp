@@ -28,6 +28,16 @@ export const PROVIDERS = {
 
 export const PROVIDER_IDS = Object.keys(PROVIDERS)
 
+const OPTIONAL_PROVIDER_FLAGS = {
+  mtpelerin: import.meta.env.VITE_ENABLE_MTPELERIN === 'true',
+  topper: import.meta.env.VITE_ENABLE_TOPPER === 'true',
+  guardarian: import.meta.env.VITE_ENABLE_GUARDARIAN === 'true',
+}
+
+export const ENABLED_PROVIDER_IDS = PROVIDER_IDS.filter(
+  (id) => id === 'transak' || OPTIONAL_PROVIDER_FLAGS[id] === true,
+)
+
 export function getProvider(id) {
   const p = PROVIDERS[id]
   if (!p) throw new Error(`unknown provider: ${id}`)
@@ -37,4 +47,8 @@ export function getProvider(id) {
 // list metadata for all providers — used by the comparison UI.
 export function listProviderMetadata() {
   return PROVIDER_IDS.map((id) => PROVIDERS[id].getMetadata())
+}
+
+export function listEnabledProviderMetadata() {
+  return ENABLED_PROVIDER_IDS.map((id) => PROVIDERS[id].getMetadata())
 }

@@ -84,10 +84,11 @@ export default function PrivacyPage() {
               <p className="mt-3 mb-2"><strong>Data stored only in your browser:</strong></p>
               <ul className="list-disc pl-6 space-y-1.5">
                 <li>
-                  Your most recently used wallet address (in <span className="font-mono text-sm">localStorage</span>),
-                  so the History view can fetch your transactions without asking you to retype it.
+                  Random per-order access IDs (in <span className="font-mono text-sm">localStorage</span>),
+                  so History can request only orders created in this browser.
                 </li>
                 <li>Your theme preference (light/dark).</li>
+                <li>Your language and privacy-disclosure preferences.</li>
               </ul>
               <p className="mt-3"><strong>What we do not collect:</strong> emails, names, phone numbers,
                 postal addresses, government identification, payment card or bank account details, or

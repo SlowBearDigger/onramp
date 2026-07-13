@@ -82,7 +82,7 @@
   "privacyDisclosure": {
     "aria": "Datenschutzhinweis",
     "title": "Deine Privatsphäre",
-    "body": "Wir nutzen weder Analytics noch Werbe-Tracker. Wallet-Adresse, Theme und letzte Aktivität werden nur lokal in diesem Browser gespeichert.",
+    "body": "Wir nutzen weder Analytics noch Werbe-Tracker. Einstellungen und zufällige Auftragskennungen werden nur in diesem Browser gespeichert.",
     "readMore": "Richtlinie lesen",
     "cta": "Verstanden",
     "dismiss": "Schließen"
@@ -276,7 +276,7 @@
     }
   },
   "history": {
-    "localStorageNotice": "Ihre zuletzt verwendete Wallet-Adresse bleibt in diesem Browser gespeichert, damit wir Ihren Verlauf ohne Konto anzeigen können. Browserdaten löschen oder Gerät wechseln zum Zurücksetzen.",
+    "localStorageNotice": "Dieser Browser speichert zufällige Zugriffskennungen für hier erstellte Aufträge. Nach dem Löschen der Browserdaten oder einem Gerätewechsel werden diese Aufträge nicht mehr angezeigt.",
     "title": "Transaktionsverlauf",
     "count_one": "{{count}} Transaktion",
     "count_other": "{{count}} Transaktionen",

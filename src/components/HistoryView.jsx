@@ -2,12 +2,11 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from 'motion/react'
-import { ClockCounterClockwise, CircleNotch, Info, ArrowSquareOut, ShieldWarning, Bell, BellSlash } from '@phosphor-icons/react'
+import { ClockCounterClockwise, CircleNotch, Info, ArrowSquareOut, ShieldWarning } from '@phosphor-icons/react'
 import { BlurIn, Stagger, StaggerItem, HoverCard, MagneticButton } from './Motion'
 import { CryptoIcon } from '../config/cryptos'
 import { formatDate } from '../data/mockData'
-import { useOrders, readLastWallet } from '../hooks/useOrders'
-import { usePushNotifications } from '../hooks/usePushNotifications'
+import { useOrders } from '../hooks/useOrders'
 import { explorerUrlFor, shortHash } from '../utils/explorer'
 
 // filters use stable internal ids; the visible label comes from i18n.
@@ -44,8 +43,6 @@ export default function HistoryView() {
   const [expandedId, setExpandedId] = useState(null)
   const { orders, state, lastFetchedAt, isPolling, refresh } = useOrders()
   const age = useRelativeAge(lastFetchedAt)
-  const wallet = readLastWallet()
-  const push = usePushNotifications({ customerId: wallet })
 
   const filtered = filter === 'all'
     ? orders
@@ -90,65 +87,6 @@ export default function HistoryView() {
             {isError && <span className="ml-2 text-[10px] uppercase tracking-wider font-bold text-error">· {t('history.errorBadge')}</span>}
           </p>
 
-          {/* push notifications status — every state renders something
-              actionable so the user always understands what's happening. */}
-          {push.state === 'unsubscribed' && wallet && (
-            <button
-              type="button"
-              onClick={push.subscribe}
-              className="mt-3 inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/10 text-primary text-xs font-bold hover:bg-primary/15 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-            >
-              <Bell size={14} weight="bold" aria-hidden="true" />
-              {t('push.enable', { defaultValue: 'Enable order notifications' })}
-            </button>
-          )}
-          {push.state === 'subscribed' && (
-            <button
-              type="button"
-              onClick={push.unsubscribe}
-              className="mt-3 inline-flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-bold text-success hover:text-on-surface transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded"
-              title={t('push.disableTooltip', { defaultValue: 'Click to disable' })}
-            >
-              <Bell size={11} weight="bold" aria-hidden="true" />
-              {t('push.active', { defaultValue: 'Notifications on · click to disable' })}
-            </button>
-          )}
-          {push.state === 'denied' && (
-            <p className="mt-3 inline-flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-bold text-secondary">
-              <BellSlash size={11} weight="bold" aria-hidden="true" />
-              {t('push.denied', { defaultValue: 'Notifications blocked — re-allow in browser settings' })}
-            </p>
-          )}
-          {push.state === 'ios-needs-pwa' && (
-            <div className="mt-3 inline-flex items-start gap-2 px-3 py-2 rounded-lg bg-tertiary/10 text-tertiary text-[11px] leading-snug max-w-sm">
-              <Bell size={13} weight="bold" aria-hidden="true" className="shrink-0 mt-0.5" />
-              <span>
-                {t('push.iosNeedsPwa', { defaultValue: 'On iPhone, tap the Share icon → "Add to Home Screen", then open the installed app to enable notifications.' })}
-              </span>
-            </div>
-          )}
-          {push.state === 'unsupported' && (
-            <p className="mt-3 inline-flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-bold text-secondary">
-              <BellSlash size={11} weight="bold" aria-hidden="true" />
-              {t('push.unsupported', { defaultValue: 'This browser does not support push notifications' })}
-            </p>
-          )}
-          {push.state === 'error' && (
-            <div className="mt-3 inline-flex items-start gap-2 max-w-sm">
-              <button
-                type="button"
-                onClick={push.subscribe}
-                className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-error/10 text-error text-xs font-bold hover:bg-error/15 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-                title={push.error?.message}
-              >
-                <Bell size={14} weight="bold" aria-hidden="true" />
-                {t('push.retry', { defaultValue: 'Retry · enable notifications' })}
-              </button>
-            </div>
-          )}
-          {push.state === 'error' && push.error?.message && (
-            <p className="mt-1.5 text-[11px] text-error/80 leading-snug max-w-sm">{push.error.message}</p>
-          )}
         </div>
 
         {/* filter chips */}
@@ -179,8 +117,8 @@ export default function HistoryView() {
         )}
 
         {/* empty state — ready, no rows, not an error. covers two cases:
-              1. user is logged out / hasn't bought anything yet,
-              2. user with stored wallet has no transactions on file.
+              1. the browser has not created an order yet,
+              2. its locally stored order capabilities have no matching rows.
             polish: animated halo on the icon to feel less static, a
             secondary CTA that adapts to context (try swap when 'all',
             show all when filtered), and a footnote linking the privacy

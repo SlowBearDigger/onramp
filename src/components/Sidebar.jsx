@@ -4,7 +4,8 @@ import { CreditCard, ArrowsLeftRight, ClockCounterClockwise, Sun, Moon, Swap, Pa
 import { useTheme } from '../context/ThemeContext'
 import { BrandMark } from './BrandLogo'
 import { CRYPTOS } from '../config/cryptos'
-import { PROVIDER_IDS } from '../providers'
+import { ENABLED_PROVIDER_IDS } from '../providers'
+import { PAY_ENABLED } from '../config/features'
 
 // asymmetric brand-only sidebar.
 //
@@ -20,7 +21,7 @@ const sidebarLinks = [
   { Icon: Swap, label: 'Swap', to: '/swap' },
   // "Pay" sits after Swap, before History (per product brief). short label
   // to match its siblings; the page itself is titled "Pay recipient".
-  { Icon: PaperPlaneTilt, label: 'Pay', to: '/pay' },
+  ...(PAY_ENABLED ? [{ Icon: PaperPlaneTilt, label: 'Pay', to: '/pay' }] : []),
   { Icon: ClockCounterClockwise, label: 'History', to: '/history' },
 ]
 
@@ -120,10 +121,10 @@ export default function Sidebar() {
               terminal vibe of the rest of the data UI. */}
           <div
             className="flex items-center justify-between px-5 py-2 text-secondary"
-            title={`${PROVIDER_IDS.length} on-ramp providers · ${CRYPTOS.length} supported cryptocurrencies`}
+            title={`${ENABLED_PROVIDER_IDS.length} on-ramp provider${ENABLED_PROVIDER_IDS.length === 1 ? '' : 's'} · ${CRYPTOS.length} supported cryptocurrencies`}
           >
             <span className="text-[10px] uppercase tracking-[0.18em] font-mono">
-              {PROVIDER_IDS.length} providers
+              {ENABLED_PROVIDER_IDS.length} provider{ENABLED_PROVIDER_IDS.length === 1 ? '' : 's'}
             </span>
             <span aria-hidden="true" className="text-secondary/40">·</span>
             <span className="text-[10px] uppercase tracking-[0.18em] font-mono">

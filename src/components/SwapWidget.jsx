@@ -2,23 +2,23 @@ import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from 'motion/react'
-import { CaretDown, ArrowsDownUp, SealCheck, Wallet as WalletIcon, Bank, Check } from '@phosphor-icons/react'
+import { CaretDown, ArrowsDownUp, SealCheck, Wallet as WalletIcon, Bank } from '@phosphor-icons/react'
 import { BlurIn, MagneticButton, Stagger, StaggerItem, Sparkline } from './Motion'
 import { CRYPTOS, CryptoIcon } from '../config/cryptos'
 import { MOCK_PROVIDERS } from '../data/mockData'
-import { FIAT_OPTIONS, PAYMENT_METHODS } from '../config/cryptos'
+import { FIAT_OPTIONS } from '../config/cryptos'
 import { useLiveTicker } from '../hooks/useLiveTicker'
 import { useProvider } from '../hooks/useProvider'
-import { listProviderMetadata, PROVIDER_IDS } from '../providers/index.js'
+import { listEnabledProviderMetadata, ENABLED_PROVIDER_IDS } from '../providers/index.js'
 import { toTransakNetwork } from '../providers/transak/index.js'
 import TransactionFlow from './TransactionFlow'
 import ProviderModal from './ProviderModal'
 import ProviderComparison, { assignBadges } from './ProviderComparison'
 import { BrandMark } from './BrandLogo'
 import { getOnColor } from '../utils/contrast'
+import { API_BASE } from '../config/api'
 
 const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true'
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001'
 
 const buyAmounts = [50, 100, 250, 500, 1000]
 
@@ -153,8 +153,6 @@ export default function SwapWidget({ onCryptoChange, mode = 'buy', onViewHistory
   const [showCryptoMenu, setShowCryptoMenu] = useState(false)
   const [fiat, setFiat] = useState(initialFiat)
   const [showFiatMenu, setShowFiatMenu] = useState(false)
-  const [payMethod, setPayMethod] = useState(PAYMENT_METHODS[0])
-  const [showPayMenu, setShowPayMenu] = useState(false)
   const [wallet, setWallet] = useState('')
   // touched flag — defer error message until the user has actually interacted
   // with the wallet input (blur or submit attempt). without this, role="alert"
@@ -318,7 +316,7 @@ export default function SwapWidget({ onCryptoChange, mode = 'buy', onViewHistory
     if (stage !== 'compare') return
     let cancelled = false
 
-    const meta = listProviderMetadata()
+    const meta = listEnabledProviderMetadata()
     // initial state: all loading.
     setQuoteCards(meta.map((m) => ({
       id: m.id,
@@ -410,7 +408,7 @@ export default function SwapWidget({ onCryptoChange, mode = 'buy', onViewHistory
           </div>
 
           <div className="relative shrink-0">
-            <button onClick={() => { setShowFiatMenu((v) => !v); setShowCryptoMenu(false); setShowPayMenu(false) }} className="flex items-center gap-1.5 sm:gap-2 py-1.5 px-2 sm:px-3 rounded-lg hover:bg-surface-container-low dark:hover:bg-surface-container-high/50 transition-colors">
+            <button onClick={() => { setShowFiatMenu((v) => !v); setShowCryptoMenu(false) }} className="flex items-center gap-1.5 sm:gap-2 py-1.5 px-2 sm:px-3 rounded-lg hover:bg-surface-container-low dark:hover:bg-surface-container-high/50 transition-colors">
               <span className="text-xs font-bold text-secondary font-mono">{fiat.symbol}</span>
               <span className="text-xs font-bold text-on-surface">{fiat.code}</span>
               <CaretDown size={14} weight="bold" className="text-secondary" />
@@ -633,7 +631,7 @@ export default function SwapWidget({ onCryptoChange, mode = 'buy', onViewHistory
                   <StaggerItem>
                     <div className="flex items-center justify-center gap-2 text-xs text-secondary px-1 sm:px-2">
                       <SealCheck size={14} weight="fill" className="text-success" aria-hidden="true" />
-                      <span>{t('swap.providersHint', { count: PROVIDER_IDS.length })}</span>
+                      <span>{t('swap.providersHint', { count: ENABLED_PROVIDER_IDS.length })}</span>
                     </div>
                   </StaggerItem>
 
@@ -672,38 +670,6 @@ export default function SwapWidget({ onCryptoChange, mode = 'buy', onViewHistory
                     )}
                   </StaggerItem>
 
-                  {/* payment / payout method */}
-                  <StaggerItem className="space-y-1.5 sm:space-y-2">
-                    <label className="text-xs font-bold tracking-widest text-secondary uppercase ml-1 sm:ml-2">
-                      {isSell ? t('swap.labels.payoutMethod') : t('swap.labels.paymentMethod')}
-                    </label>
-                    <motion.button onClick={() => { setShowPayMenu((v) => !v); setShowCryptoMenu(false); setShowFiatMenu(false) }} className="w-full bg-surface-container-lowest dark:bg-surface-container border border-outline-variant/20 dark:border-white/5 p-3 sm:p-4 rounded-lg flex items-center justify-between shadow-sm hover:bg-surface-container-low/30 dark:hover:bg-surface-container-high/20" whileTap={{ scale: 0.99 }}>
-                      <div className="flex items-center gap-2 sm:gap-3">
-                        <span className="text-secondary inline-flex"><payMethod.Icon size={18} weight="bold" /></span>
-                        <span className="text-sm font-medium">{payMethod.label}</span>
-                      </div>
-                      <motion.span className="text-secondary inline-flex" animate={{ rotate: showPayMenu ? 180 : 0 }}>
-                        <CaretDown size={16} weight="bold" />
-                      </motion.span>
-                    </motion.button>
-                    <AnimatePresence>
-                      {showPayMenu && (
-                        <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} className="overflow-hidden">
-                          <div className="space-y-1 pt-1">
-                            {PAYMENT_METHODS.map((m, i) => (
-                              <motion.button key={m.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.04 }} onClick={() => { setPayMethod(m); setShowPayMenu(false) }}
-                                className={`w-full flex items-center gap-3 p-3 rounded-lg ${payMethod.id === m.id ? 'bg-primary/5 border border-primary/10' : 'hover:bg-surface-container-low dark:hover:bg-surface-container-high/30'}`}>
-                                <span className="text-secondary inline-flex"><m.Icon size={18} weight="bold" /></span>
-                                <span className={`text-sm font-medium ${payMethod.id === m.id ? 'text-primary' : 'text-on-surface'}`}>{m.label}</span>
-                                {payMethod.id === m.id && <Check size={14} weight="bold" className="text-primary ml-auto" />}
-                              </motion.button>
-                            ))}
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </StaggerItem>
-
                   {/* CTA: straight to Transak (hybrid default). the compare
                       link below opens the three-provider comparison. */}
                   <StaggerItem>
@@ -716,7 +682,7 @@ export default function SwapWidget({ onCryptoChange, mode = 'buy', onViewHistory
                     >
                       {t('swap.cta.continue')}
                     </MagneticButton>
-                    <div className="mt-2.5 text-center">
+                    {ENABLED_PROVIDER_IDS.length > 1 && <div className="mt-2.5 text-center">
                       <button
                         type="button"
                         onClick={handleCompare}
@@ -727,9 +693,9 @@ export default function SwapWidget({ onCryptoChange, mode = 'buy', onViewHistory
                             : 'text-secondary/50 cursor-not-allowed'
                         }`}
                       >
-                        {t('swap.compareLink', { count: PROVIDER_IDS.length })}
+                        {t('swap.compareLink', { count: ENABLED_PROVIDER_IDS.length })}
                       </button>
-                    </div>
+                    </div>}
                   </StaggerItem>
 
                 </Stagger>

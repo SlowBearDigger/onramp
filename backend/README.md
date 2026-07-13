@@ -3,7 +3,7 @@
 Tiny Express app that:
 
 1. Receives signed webhook callbacks from Transak and persists order state.
-2. Exposes a read API (`/api/orders`) that the frontend uses to render the real transaction history.
+2. Exposes capability-scoped history (`POST /api/orders/history`) without returning raw provider payloads.
 3. Proxies Transak's public quote lookup so the frontend can fetch prices without CORS headaches.
 
 Portable by design — works on Namecheap cPanel (Passenger), Railway, Render, Fly.io, any VPS, or Docker. No cloud-specific runtimes.
@@ -32,7 +32,7 @@ The server listens on `http://localhost:3001`. Health check:
 
 ```bash
 curl http://localhost:3001/healthz
-# → {"ok":true,"env":"STAGING","ts":...}
+# → {"ok":true}
 ```
 
 ### Simulating a webhook while you wait for Transak creds
@@ -48,7 +48,9 @@ curl -X POST http://localhost:3001/webhook/transak/order \
   -H 'content-type: application/json' \
   -d "{\"eventID\":\"ORDER_COMPLETED\",\"data\":\"$JWT\"}"
 
-curl 'http://localhost:3001/api/orders?customerId=0xabc'
+curl -X POST 'http://localhost:3001/api/orders/history' \
+  -H 'content-type: application/json' \
+  -d '{"accessIds":["<partner-order-uuid>"]}'
 ```
 
 Turn `TRANSAK_WEBHOOK_INSECURE` back to `false` before deploying anywhere exposed to the internet.
@@ -74,6 +76,7 @@ Turn `TRANSAK_WEBHOOK_INSECURE` back to `false` before deploying anywhere expose
    - `TRANSAK_PARTNER_ACCESS_TOKEN=...`
    - `CORS_ORIGIN=https://slowbeardigger.dev`
    - `PORT` — leave blank; Passenger injects it.
+   - `HOST` — use `127.0.0.1` behind a local reverse proxy; override only when the platform requires a public bind.
 6. Click **Start App** (or **Restart**).
 7. Visit `https://api.slowbeardigger.dev/healthz` → should return JSON.
 8. Provide `https://api.slowbeardigger.dev/webhook/transak/order` to Transak when registering the webhook.
@@ -117,7 +120,7 @@ Run with `-v offramp-data:/app` to persist the SQLite file, or set `DB_PATH` to 
 - [ ] `TRANSAK_PARTNER_ACCESS_TOKEN` is set and matches the Transak Partner Dashboard value.
 - [ ] `CORS_ORIGIN` is exactly the frontend origin(s), comma-separated — never `*`.
 - [ ] HTTPS is enforced at the reverse proxy level (Namecheap/Nginx/Cloudflare).
-- [ ] Database backups are scheduled (just `cp data.db data-$(date).db` on a cron).
+- [ ] Database backups use SQLite's consistent `.backup` command and are integrity-checked.
 - [ ] Monitor `/healthz` from an external uptime check (UptimeRobot free tier works).
 
 ---
@@ -127,8 +130,7 @@ Run with `-v offramp-data:/app` to persist the SQLite file, or set `DB_PATH` to 
 | Method | Path                              | Purpose |
 | ------ | --------------------------------- | ------- |
 | GET    | `/healthz`                        | Liveness probe |
-| GET    | `/api/orders[?customerId=…]`      | List orders (newest first, max 100) |
-| GET    | `/api/orders/:id`                 | Single order by Transak order id |
+| POST   | `/api/orders/history`             | Capability-scoped history (max 200 access IDs) |
 | GET    | `/api/quotes?…`                   | Proxy for Transak public pricing lookup |
 | POST   | `/webhook/transak/order`          | Transak calls this with a signed JWT |
 

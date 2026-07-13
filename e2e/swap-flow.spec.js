@@ -184,8 +184,8 @@ test('normal motion keeps the buy→history positional transition', async ({ pag
 test('history view renders an actionable state without backend connectivity', async ({ page }) => {
   // playwright config points VITE_API_BASE_URL at an unreachable port so
   // the orders fetch fails fast. the page must still render something
-  // useful — either the empty state (no last-used wallet) or the error
-  // badge (fetch failed) — never crash silently.
+  // useful — either the empty state (no local order capabilities) or the
+  // error badge (fetch failed) — never crash silently.
   await page.goto('history')
   // the heading always renders regardless of fetch state
   await expect(page.getByRole('heading', { name: /Transaction History/i })).toBeVisible()
@@ -229,10 +229,7 @@ test('desktop product navigation stays mounted across app sections', async ({ pa
   await expect(page.getByRole('heading', { name: /swap/i }).first()).toBeVisible()
   await expectPersistentShell()
 
-  await page.getByRole('link', { name: 'Pay', exact: true }).click()
-  await expect(page).toHaveURL(/\/pay$/)
-  await expect(page.getByRole('heading', { name: /pay/i }).first()).toBeVisible()
-  await expectPersistentShell()
+  await expect(page.getByRole('link', { name: 'Pay', exact: true })).toHaveCount(0)
 
   await page.getByRole('link', { name: 'History', exact: true }).click()
   await expect(page).toHaveURL(/\/history$/)

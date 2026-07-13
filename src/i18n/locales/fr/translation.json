@@ -82,7 +82,7 @@
   "privacyDisclosure": {
     "aria": "Avis de confidentialité",
     "title": "Votre vie privée",
-    "body": "Nous n'utilisons ni analytics ni traceurs publicitaires. Votre wallet, thème et activité récente sont stockés uniquement dans ce navigateur.",
+    "body": "Nous n'utilisons ni analytics ni traceurs publicitaires. Les préférences et identifiants aléatoires de commande sont stockés uniquement dans ce navigateur.",
     "readMore": "Lire la politique",
     "cta": "Compris",
     "dismiss": "Fermer"
@@ -276,7 +276,7 @@
     }
   },
   "history": {
-    "localStorageNotice": "Votre dernière adresse de portefeuille est mémorisée dans ce navigateur afin d'afficher votre historique sans compte. Effacez les données du navigateur ou changez d'appareil pour réinitialiser.",
+    "localStorageNotice": "Ce navigateur conserve des identifiants aléatoires pour les commandes créées ici. Si vous effacez les données ou changez d'appareil, ces commandes ne seront plus affichées.",
     "title": "Historique des transactions",
     "count_one": "{{count}} transaction",
     "count_other": "{{count}} transactions",

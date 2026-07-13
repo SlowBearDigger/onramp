@@ -82,7 +82,7 @@
   "privacyDisclosure": {
     "aria": "Aviso de privacidad",
     "title": "Tu privacidad",
-    "body": "No usamos analytics ni trackers de publicidad. Tu wallet, tema y actividad reciente se guardan solo en este navegador.",
+    "body": "No usamos analytics ni trackers de publicidad. Las preferencias y los identificadores aleatorios de pedidos se guardan solo en este navegador.",
     "readMore": "Leer la política",
     "cta": "Entendido",
     "dismiss": "Cerrar"
@@ -276,7 +276,7 @@
     }
   },
   "history": {
-    "localStorageNotice": "Tu última dirección de wallet se guarda en este navegador para mostrarte el historial sin necesidad de cuenta. Borra los datos del navegador o cambia de dispositivo para reiniciar.",
+    "localStorageNotice": "Este navegador guarda identificadores aleatorios de los pedidos creados aquí. Si borras los datos o cambias de dispositivo, esos pedidos dejarán de aparecer.",
     "title": "Historial de transacciones",
     "count_one": "{{count}} transacción",
     "count_other": "{{count}} transacciones",

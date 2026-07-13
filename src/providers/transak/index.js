@@ -13,13 +13,13 @@
 //     can't tamper with walletAddress or amount mid-flight.
 //   - rotating credentials is a backend-only operation.
 
+import { API_BASE } from '../../config/api'
+
 const TRANSAK_CONFIG = {
   // VITE_TRANSAK_ENV is still used so we know which iframe origin to trust
   // for postMessage validation.
   environment: import.meta.env.VITE_TRANSAK_ENV || 'STAGING',
 }
-
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001'
 
 // origins the widget can postMessage from. used for strict validation in
 // useProvider — any message from another origin is dropped.

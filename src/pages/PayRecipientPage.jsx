@@ -14,6 +14,7 @@ import { useProvider } from '../hooks/useProvider'
 import { useTrustedAddresses } from '../hooks/useTrustedAddresses'
 import { validateAddress, truncateAddress } from '../utils/address'
 import { getOnColor } from '../utils/contrast'
+import { PAY_ENABLED } from '../config/features'
 
 // "Pay recipient" — collapse the on-ramp → withdraw → send chain into one
 // screen. the user (or a shared link) provides a recipient address, asset,
@@ -81,7 +82,7 @@ export default function PayRecipientPage() {
   const amountNum = parseFloat(amount) || 0
   const canContinue = validation.valid && amountNum > 0
 
-  const liveMode = !USE_MOCK
+  const liveMode = PAY_ENABLED && !USE_MOCK
   const successPendingRef = useRef(false)
   const provider = useProvider({
     onSuccess: () => { successPendingRef.current = true },

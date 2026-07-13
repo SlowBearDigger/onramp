@@ -68,6 +68,7 @@ export default function ProviderComparison({
 function ProviderCard({ card, cryptoSymbol, cryptoColor, fiatCode, fiatSymbol, onPick }) {
   const { t } = useTranslation()
   const { id, name, state, cryptoAmount, fee, rateText, badge, unverified } = card
+  const selectable = isProviderSelectable(card)
 
   // build a flat, screen-reader-friendly summary so the button's accessible
   // name doesn't read as a stream of disconnected fragments.
@@ -90,12 +91,14 @@ function ProviderCard({ card, cryptoSymbol, cryptoColor, fiatCode, fiatSymbol, o
 
   return (
     <motion.button
-      onClick={() => onPick(id)}
+      type="button"
+      onClick={() => pickProvider(card, onPick)}
+      disabled={!selectable}
       aria-label={accessibleLabel}
       aria-busy={state === 'loading' ? 'true' : undefined}
-      whileHover={{ y: -1 }}
-      whileTap={{ scale: 0.99 }}
-      className="w-full text-left bg-surface-container-low/60 dark:bg-surface-container-high/30 border border-outline-variant/10 dark:border-white/5 hover:border-primary/30 hover:bg-surface-container-low dark:hover:bg-surface-container-high/50 p-3 sm:p-4 rounded-xl transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+      whileHover={selectable ? { y: -1 } : undefined}
+      whileTap={selectable ? { scale: 0.99 } : undefined}
+      className={`w-full text-left bg-surface-container-low/60 dark:bg-surface-container-high/30 border border-outline-variant/10 dark:border-white/5 p-3 sm:p-4 rounded-xl transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${selectable ? 'hover:border-primary/30 hover:bg-surface-container-low dark:hover:bg-surface-container-high/50' : 'cursor-not-allowed opacity-65'}`}
     >
       <div className="flex items-center justify-between gap-3" aria-hidden="true">
         <div className="flex items-center gap-2.5 min-w-0">
@@ -154,6 +157,16 @@ function ProviderCard({ card, cryptoSymbol, cryptoColor, fiatCode, fiatSymbol, o
       </div>
     </motion.button>
   )
+}
+
+export function isProviderSelectable(card) {
+  return card?.state === 'ok'
+}
+
+export function pickProvider(card, onPick) {
+  if (!isProviderSelectable(card)) return false
+  onPick(card.id)
+  return true
 }
 
 function fmtFee(fee) {

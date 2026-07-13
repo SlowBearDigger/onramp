@@ -8,6 +8,19 @@ import { VitePWA } from 'vite-plugin-pwa'
 // `/<repo-name>/` automatically (see .github/workflows/deploy-frontend.yml).
 const BASE_PATH = process.env.BASE_PATH || '/ramp/'
 
+// WebKit upgrades localhost module requests when the production CSP contains
+// upgrade-insecure-requests, which leaves the Vite dev page blank. Strip only
+// that directive while serving locally; production builds keep the full CSP.
+function developmentCspPlugin() {
+  return {
+    name: 'development-csp',
+    apply: 'serve',
+    transformIndexHtml(html) {
+      return html.replace(/\s*upgrade-insecure-requests;/, '')
+    },
+  }
+}
+
 export default defineConfig(({ mode }) => ({
   base: BASE_PATH,
   // strip console.* in production via compile-time substitution. each
@@ -23,12 +36,12 @@ export default defineConfig(({ mode }) => ({
     'console.debug': '(()=>{})',
   } : {},
   plugins: [
+    developmentCspPlugin(),
     react(),
     tailwindcss(),
     VitePWA({
-      // injectManifest mode lets us write a custom service worker (src/sw.js)
-      // — needed for the push event handler. workbox precaching is still
-      // baked in via self.__WB_MANIFEST.
+      // injectManifest mode keeps runtime caching in src/sw.js while Workbox
+      // still injects the build's precache manifest.
       strategies: 'injectManifest',
       srcDir: 'src',
       filename: 'sw.js',
@@ -55,7 +68,7 @@ export default defineConfig(({ mode }) => ({
         ],
       },
       // injectManifest config — only the precache glob lives here. all
-      // runtime caching strategies and event handlers are in src/sw.js.
+      // runtime caching strategies are in src/sw.js.
       injectManifest: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         // skip the wallet stack (~150-500KB chunks) from precache.

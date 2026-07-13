@@ -4,8 +4,8 @@ import { useAdminAuth } from '../../hooks/useAdminAuth'
 import StatCard from '../../components/admin/StatCard'
 import BarChart, { PROVIDER_COLORS } from '../../components/admin/BarChart'
 import DateRangePicker from '../../components/admin/DateRangePicker'
+import { API_BASE } from '../../config/api'
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001'
 const PROVIDER_LABELS = { transak: 'Transak', mtpelerin: 'Mt Pelerin', topper: 'Topper' }
 
 function defaultRange() {

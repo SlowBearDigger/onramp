@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-route
 import { useTranslation } from 'react-i18next'
 import { AnimatePresence } from 'motion/react'
 import { ThemeProvider } from './context/ThemeContext'
+import { AdminAuthProvider } from './hooks/useAdminAuth'
 import ErrorBoundary from './components/ErrorBoundary'
 import Header from './components/Header'
 import AppShell from './components/AppShell'
@@ -11,6 +12,7 @@ import PageTransition from './components/PageTransition'
 import PrivacyDisclosure from './components/PrivacyDisclosure'
 import LandingPage from './pages/LandingPage'
 import NotFoundPage from './pages/NotFoundPage'
+import { PAY_ENABLED } from './config/features'
 
 // the wallet stack (Reown AppKit + wagmi + solana adapters, ~150KB)
 // is fully encapsulated inside the lazy-loaded WalletButton chunk.
@@ -29,7 +31,9 @@ const SwapPage = lazy(() => import('./pages/SwapPage'))
 const SwapKitPage = lazy(() => import('./pages/SwapKitPage'))
 // "Pay recipient" — collapses the ramp flow into a one-screen payment with
 // the destination pre-filled. lazy like every other app-surface route.
-const PayRecipientPage = lazy(() => import('./pages/PayRecipientPage'))
+const PayRecipientPage = import.meta.env.VITE_ENABLE_PAY === 'true'
+  ? lazy(() => import('./pages/PayRecipientPage'))
+  : null
 const PrivacyPage = lazy(() => import('./pages/PrivacyPage'))
 const TermsPage = lazy(() => import('./pages/TermsPage'))
 const AdminLayout = lazy(() => import('./pages/admin/AdminLayout'))
@@ -40,7 +44,7 @@ const AdminDashboardPage = lazy(() => import('./pages/admin/DashboardPage'))
 // they share Sidebar + BottomNav for nav, hide the public marketing
 // Header, and group under one pageKey so AnimatePresence cross-fades
 // only on entering/leaving the app surface (not on internal flips).
-const APP_PATHS = ['/buy', '/sell', '/history', '/swap', '/pay']
+const APP_PATHS = ['/buy', '/sell', '/history', '/swap', ...(PAY_ENABLED ? ['/pay'] : [])]
 const isAppPath = (p) => APP_PATHS.some((r) => p === r || p.startsWith(r + '/'))
 
 function AnimatedRoutes() {
@@ -57,12 +61,14 @@ function AnimatedRoutes() {
   if (isAdmin) {
     return (
       <Suspense fallback={<RouteFallback />}>
-        <Routes location={location}>
-          <Route path="/admin" element={<AdminLayout />}>
-            <Route index element={<AdminDashboardPage />} />
-            <Route path="login" element={<AdminLoginPage />} />
-          </Route>
-        </Routes>
+        <AdminAuthProvider>
+          <Routes location={location}>
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route index element={<AdminDashboardPage />} />
+              <Route path="login" element={<AdminLoginPage />} />
+            </Route>
+          </Routes>
+        </AdminAuthProvider>
       </Suspense>
     )
   }
@@ -82,11 +88,11 @@ function AnimatedRoutes() {
                 <Route path="/sell" element={<SwapPage view="ramp" mode="sell" />} />
                 <Route path="/history" element={<SwapPage view="history" mode="buy" />} />
                 <Route path="/swap" element={<SwapKitPage />} />
-                <Route path="/pay" element={<PayRecipientPage />} />
+                <Route path="/pay" element={PAY_ENABLED ? <PayRecipientPage /> : <Navigate to="/buy" replace />} />
               </Route>
               {/* legacy redirects — the old /swap path was the ramp Buy view
                   and /swap/sell, /swap/history its siblings. external links
-                  (push notifications, customer support) may still target
+                  (bookmarks and customer support messages) may still target
                   /swap/sell and /swap/history; redirect them. /swap itself
                   is now a real page (SwapKit), so no redirect for the bare
                   path — users who hit it land on the new swap UI. */}

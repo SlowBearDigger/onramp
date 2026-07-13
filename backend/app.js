@@ -4,8 +4,7 @@ import cors from 'cors'
 import helmet from 'helmet'
 import rateLimit from 'express-rate-limit'
 
-import { upsertOrder, listOrders, getOrderById } from './db.js'
-import { fetchPartnerOrders, partnerOrderToRow } from './providers/transak-orders.js'
+import { upsertOrder, listOrdersByAccessIds } from './db.js'
 import {
   verifyOrderWebhook as verifyTransakWebhook,
   webhookToOrderRow as transakWebhookToRow,
@@ -60,16 +59,9 @@ import {
   ipFromRequest,
   userAgentFromRequest,
 } from './admin/audit.js'
-import {
-  isPushEnabled,
-  assertPushConfigSafe,
-  getPublicKey as getPushPublicKey,
-  saveSubscription as savePushSubscription,
-  deleteSubscription as deletePushSubscription,
-  sendOrderPush,
-} from './push.js'
 
 const PORT = Number(process.env.PORT || 3001)
+const HOST = process.env.HOST || '127.0.0.1'
 const TRANSAK_ENV = process.env.TRANSAK_ENV || 'STAGING'
 const IS_PRODUCTION = (process.env.NODE_ENV || '').toLowerCase() === 'production' ||
   TRANSAK_ENV.toUpperCase() === 'PRODUCTION'
@@ -83,7 +75,6 @@ const CORS_ORIGIN = parseCorsOrigins(process.env.CORS_ORIGIN, { production: IS_P
 assertTransakConfigSafe()
 assertTopperConfigSafe()
 assertAdminConfigSafe()
-assertPushConfigSafe()
 
 // input-shape validators (tight by design — these are public endpoints).
 //
@@ -101,10 +92,6 @@ const CURRENCY_RE = /^[A-Z0-9]{2,12}$/
 const NETWORK_RE = /^[a-z0-9_-]{2,32}$/
 // buy/sell enum.
 const SIDE_RE = /^(BUY|SELL)$/
-// provider id enum. superset of src/providers/index.js — guardarian is
-// quote-only on the backend until its checkout flow is decided.
-const PROVIDER_RE = /^(transak|mtpelerin|topper|guardarian)$/
-
 const app = express()
 
 // passenger/nginx/cloudflare sit in front. `1` trusts one proxy hop.
@@ -137,18 +124,13 @@ const webhookLimiter = rateLimit({ windowMs: 60_000, max: 60, standardHeaders: t
 
 // dedicated tighter limiters for endpoints that consume upstream quota
 // or are abuse-prone. each call to /widget-url mints a real Transak
-// session (counts against our partner quota); each /api/push/subscribe
-// writes to the DB. global 60/min is too lax for these.
+// session (counts against our partner quota). global 60/min is too lax.
 const widgetUrlLimiter = rateLimit({ windowMs: 60_000, max: 10, standardHeaders: true, legacyHeaders: false })
-const pushSubscribeLimiter = rateLimit({ windowMs: 60_000, max: 10, standardHeaders: true, legacyHeaders: false })
 const mtpelerinEventLimiter = rateLimit({ windowMs: 60_000, max: 10, standardHeaders: true, legacyHeaders: false })
 // guardarian throttles transaction creation to ~1/min per IP upstream; keep
 // our own gate tight so a burst of clicks doesn't trip their throttle and
 // strand users behind a generic error.
 const guardarianTxLimiter = rateLimit({ windowMs: 60_000, max: 6, standardHeaders: true, legacyHeaders: false })
-// profile sync spends transak partner-api quota on every call — keep it
-// tighter than the local-only endpoints.
-const profileSyncLimiter = rateLimit({ windowMs: 60_000, max: 6, standardHeaders: true, legacyHeaders: false })
 
 // topper webhook needs the RAW body (the detached JWS signs the bytes
 // verbatim). mount it BEFORE express.json so req.body is a Buffer here.
@@ -190,69 +172,18 @@ app.get('/healthz', (_req, res) => {
   res.json({ ok: true })
 })
 
-// orders API.
-//
-// customerId is REQUIRED — no public global listing. this prevents anyone
-// from enumerating all orders across the system. wallet addresses are
-// semi-public so this isn't auth, but it does make mass scraping harder.
-// optional ?provider=<id> filter for per-provider history views.
-app.get('/api/orders', apiLimiter, (req, res) => {
-  const customerId = typeof req.query.customerId === 'string' ? req.query.customerId : ''
-  if (!CUSTOMER_ID_RE.test(customerId)) {
-    return res.status(400).json({ error: 'invalid_customerId' })
+// Capability-based history. Access IDs are random partner order UUIDs kept in
+// the originating browser. They are sent in a POST body to avoid URL logs.
+app.post('/api/orders/history', apiLimiter, (req, res) => {
+  const accessIds = req.body?.accessIds
+  if (!Array.isArray(accessIds) || accessIds.length > 200) {
+    return res.status(400).json({ error: 'invalid_accessIds' })
   }
-  const provider = typeof req.query.provider === 'string' ? req.query.provider : null
-  if (provider && !PROVIDER_RE.test(provider)) {
-    return res.status(400).json({ error: 'invalid_provider' })
+  const uniqueIds = [...new Set(accessIds)]
+  if (uniqueIds.some((id) => typeof id !== 'string' || !ORDER_ID_RE.test(id))) {
+    return res.status(400).json({ error: 'invalid_accessIds' })
   }
-  const orders = listOrders({ customerId, provider })
-  res.json({ orders })
-})
-
-// on-demand reconciliation against transak's partner orders api: pull
-// COMPLETED orders for this wallet, upsert them locally (backfills anything
-// webhooks missed and promotes unverified rows), then return the merged
-// local view. powers the in-app "your history" without leaving the site.
-//
-// the frontend should call this on history-view open, not in a poll loop —
-// polling stays on /api/orders, which never touches the upstream.
-app.get('/api/profile/orders', profileSyncLimiter, async (req, res) => {
-  const walletAddress = typeof req.query.walletAddress === 'string' ? req.query.walletAddress : ''
-  if (!CUSTOMER_ID_RE.test(walletAddress)) {
-    return res.status(400).json({ error: 'invalid_walletAddress' })
-  }
-
-  let synced = 0
-  let syncError = null
-  try {
-    const partnerOrders = await fetchPartnerOrders({ walletAddress })
-    for (const order of partnerOrders) {
-      const row = partnerOrderToRow(order)
-      if (row) {
-        upsertOrder(row)
-        synced++
-      }
-    }
-  } catch (err) {
-    // degrade gracefully: a partner-api hiccup must not blank the user's
-    // history. return the local view and flag that the sync was partial.
-    console.error('[profile] partner orders sync failed:', err?.message)
-    syncError = err?.code === 'not_configured' ? 'not_configured'
-      : err?.code === 'auth_failed' ? 'auth_failed'
-      : 'upstream_error'
-  }
-
-  const orders = listOrders({ customerId: walletAddress })
-  res.json({ orders, sync: syncError ? { ok: false, reason: syncError } : { ok: true, synced } })
-})
-
-app.get('/api/orders/:id', apiLimiter, (req, res) => {
-  if (!ORDER_ID_RE.test(req.params.id)) {
-    return res.status(400).json({ error: 'invalid_id' })
-  }
-  const order = getOrderById(req.params.id)
-  if (!order) return res.status(404).json({ error: 'not_found' })
-  res.json({ order })
+  res.json({ orders: listOrdersByAccessIds(uniqueIds) })
 })
 
 // transak quote proxy.
@@ -400,9 +331,6 @@ app.post('/webhook/transak/order', webhookLimiter, async (req, res) => {
       return res.status(200).json({ ok: true, ignored: 'no-order-id' })
     }
     upsertOrder(row)
-    // best-effort web push notification. never throws — sendOrderPush
-    // swallows its own errors so webhook ack never depends on push success.
-    sendOrderPush(row).catch(() => { /* logged inside */ })
     res.json({ ok: true, orderId: row.id, status: row.status })
   } catch (err) {
     console.error('[transak webhook] verify failed:', err?.message)
@@ -796,62 +724,6 @@ app.get('/api/admin/export.csv', apiLimiter, requireAdmin, (req, res) => {
   res.send(csv)
 })
 
-// web push — public endpoints (no auth; subscriptions are tied to a
-// wallet address, which is semi-public).
-app.get('/api/push/vapid-public-key', apiLimiter, (req, res) => {
-  if (!isPushEnabled()) return res.status(503).json({ error: 'push_not_configured' })
-  res.json({ publicKey: getPushPublicKey() })
-})
-
-app.post('/api/push/subscribe', pushSubscribeLimiter, (req, res) => {
-  if (!isPushEnabled()) return res.status(503).json({ error: 'push_not_configured' })
-  const body = req.body || {}
-  if (typeof body.customerId !== 'string' || !CUSTOMER_ID_RE.test(body.customerId)) {
-    return res.status(400).json({ error: 'invalid_customerId' })
-  }
-  if (!body.subscription || typeof body.subscription.endpoint !== 'string' ||
-      !body.subscription.keys?.p256dh || !body.subscription.keys?.auth) {
-    return res.status(400).json({ error: 'invalid_subscription' })
-  }
-  if (typeof body.subscription.endpoint !== 'string' ||
-      !/^https:\/\//.test(body.subscription.endpoint) ||
-      body.subscription.endpoint.length > 1024) {
-    return res.status(400).json({ error: 'invalid_endpoint' })
-  }
-  try {
-    savePushSubscription({
-      customerId: body.customerId,
-      endpoint: body.subscription.endpoint,
-      keys: body.subscription.keys,
-      userAgent: userAgentFromRequest(req),
-    })
-    res.json({ ok: true })
-  } catch (err) {
-    if (err?.code === 'cap_reached') {
-      return res.status(429).json({ error: 'subscription_cap_reached' })
-    }
-    console.error('[push subscribe] failed:', err?.message)
-    res.status(500).json({ error: 'subscribe_failed' })
-  }
-})
-
-app.post('/api/push/unsubscribe', pushSubscribeLimiter, (req, res) => {
-  // unsubscribe requires the FULL subscription material (endpoint + p256dh
-  // + auth). prevents an attacker who only saw the endpoint URL from
-  // silencing a victim's push notifications.
-  const body = req.body || {}
-  const endpoint = body.endpoint
-  const keys = body.keys
-  if (typeof endpoint !== 'string' || !/^https:\/\//.test(endpoint)) {
-    return res.status(400).json({ error: 'invalid_endpoint' })
-  }
-  if (!keys || typeof keys.p256dh !== 'string' || typeof keys.auth !== 'string') {
-    return res.status(400).json({ error: 'missing_keys' })
-  }
-  const removed = deletePushSubscription({ endpoint, keys })
-  res.json({ ok: true, removed })
-})
-
 // recent admin activity. read-only listing of the audit table for the
 // dashboard "Recent Admin Activity" panel. paginated.
 app.get('/api/admin/audit', apiLimiter, requireAdmin, (req, res) => {
@@ -870,6 +742,6 @@ app.use((err, _req, res, _next) => {
   res.status(500).json({ error: 'internal_error' })
 })
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`[offramp-backend] listening on :${PORT} — env=${TRANSAK_ENV} topper=${isTopperEnabled()} admin=${isAdminEnabled()}`)
+app.listen(PORT, HOST, () => {
+  console.log(`[offramp-backend] listening on ${HOST}:${PORT} — env=${TRANSAK_ENV} topper=${isTopperEnabled()} admin=${isAdminEnabled()}`)
 })

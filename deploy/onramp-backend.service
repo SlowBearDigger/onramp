@@ -8,9 +8,8 @@ Wants=network-online.target
 Type=simple
 User=onramp
 Group=onramp
-WorkingDirectory=/opt/onramp/backend
-# secrets + config are loaded from /opt/onramp/backend/.env by dotenv
-# (app.js does `import 'dotenv/config'`), so no EnvironmentFile is needed.
+WorkingDirectory=/srv/onoff-app/current/backend
+EnvironmentFile=/etc/onoff/backend.env
 Environment=NODE_ENV=production
 ExecStart=/usr/bin/node app.js
 Restart=on-failure
@@ -19,10 +18,31 @@ RestartSec=3
 # --- hardening ---
 NoNewPrivileges=true
 PrivateTmp=true
-ProtectSystem=full
+PrivateDevices=true
+ProtectSystem=strict
 ProtectHome=true
+ProtectClock=true
+ProtectControlGroups=true
+ProtectHostname=true
+ProtectKernelLogs=true
+ProtectKernelModules=true
+ProtectKernelTunables=true
+ProtectProc=invisible
+ProcSubset=pid
+UMask=0077
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+RestrictNamespaces=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+RemoveIPC=true
+LockPersonality=true
+CapabilityBoundingSet=
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
 # the SQLite DB lives here and must stay writable (see DB_PATH in .env)
 ReadWritePaths=/var/lib/onramp
+ReadOnlyPaths=/etc/onoff /srv/onoff-app
 
 [Install]
 WantedBy=multi-user.target

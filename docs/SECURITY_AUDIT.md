@@ -1,8 +1,8 @@
 # Security Audit — On-Ramp Aggregator
 
-**Date:** 2026-05-05
-**Scope:** staging deployment (frontend on GitHub Pages, backend on Render free tier)
-**Methodology:** black-box dynamic testing against the live deployment + white-box source review of the backend and frontend
+**Last updated:** 2026-07-13
+**Scope:** GitHub Pages frontend, staged VPS frontend, and VPS backend
+**Methodology:** live endpoint checks, VPS configuration checks, browser E2E tests, and source review
 
 This document satisfies §7 of the project spec (*Security audit recommendations*). It is split into two sections: **findings + remediations** (what was tested, what broke, and what was fixed in response) and **residual risk + recommendations for production** (what we accepted for staging, what to harden before going live).
 
@@ -17,8 +17,7 @@ The application aggregates third-party crypto on-ramp providers (Transak verifie
 | Transak `api-secret` | `backend/.env` only, server-side | Attacker mints widget URLs against our quota, can sign webhooks |
 | Admin password hash | `backend/.env` (scrypt) | Attacker reads order data, exports CSV, sees audit trail |
 | `ADMIN_JWT_SECRET` | `backend/.env` | Attacker forges admin sessions |
-| `VAPID_PRIVATE_KEY` | `backend/.env` | Attacker sends spoofed push notifications |
-| `data.db` (SQLite) | Render container ephemeral disk | Order history + audit log + push subscriptions |
+| `data.db` (SQLite) | VPS durable disk | Order history + audit log |
 | User wallet → orders mapping | `data.db` | Privacy: can correlate wallet to purchases |
 
 Out of scope: production hosting (handed off to Trend IT), MtPelerin and Topper end-to-end flows (provider credentials not yet acquired), wallet-connect-style ECDSA proof-of-ownership.
@@ -56,13 +55,14 @@ Anyone could register a push subscription with any wallet address (no proof of o
 - **Eavesdropping:** attacker subscribes their own device to a victim's wallet. Subsequent order webhooks fan out to all subscriptions including the attacker's, leaking order status, amount, and tx_hash to the attacker's notifications.
 - **Silencing:** attacker unsubscribes a victim's known endpoint, dropping their notifications.
 
-**Fix:** [backend/push.js](../backend/push.js) + [backend/app.js](../backend/app.js):
+**Current fix:** push subscription endpoints, frontend controls, backend module,
+and the `web-push` dependency were removed. Push must not return until it can
+bind a subscription to an opaque order capability or a verified wallet
+signature. Rate limits and keyed unsubscribe were insufficient ownership proof.
 
-1. **Cap of 5 subscriptions per wallet** (`MAX_SUBSCRIPTIONS_PER_CUSTOMER = 5`). Attacker can't stuff dozens of attacker-owned endpoints under one victim wallet. Existing endpoints can be refreshed (re-subscribe) without consuming a slot.
-2. **Tighter rate-limit:** `pushSubscribeLimiter` = 10 req/min/IP, separate from the 60/min global bucket.
-3. **Unsubscribe requires endpoint + p256dh + auth.** Knowing the endpoint URL alone is no longer enough — an attacker needs the full subscription material that was generated client-side and only sent to our server. The frontend hook now sends `subscription.toJSON()` for unsubscribe ([usePushNotifications.js:138](../src/hooks/usePushNotifications.js)).
-
-Residual: a determined attacker could still subscribe with a victim's wallet *if their wallet has < 5 active subscriptions*. The proper fix is wallet-signature proof of ownership (sign `"subscribe-onramp-{nonce}"` with the wallet's private key), which requires wallet-connect — out of scope for the current paste-an-address flow. Documented as a follow-up.
+The same release removed public wallet-based order listing. Existing browsers
+that held only a last-used wallet cannot import old history automatically;
+restoring that behavior would reopen the enumeration boundary.
 
 ---
 
@@ -168,57 +168,53 @@ The pentester also confirmed the following attacks **failed**:
 
 These are accepted risks for staging that should be addressed before a real production launch:
 
-### R1 — Push subscription IDOR (partial mitigation in place)
-
-The IDOR was raised against (cap + tighter limiter + keyed unsubscribe) but the fundamental issue — anyone can subscribe with someone else's wallet up to the 5-slot cap — is unresolved without wallet-signature ownership proof. **Production fix:** require an EIP-191 / personal_sign signature of `subscribe-onramp:{wallet}:{nonce}` with the wallet's private key, verified server-side.
-
 ### R2 — MtPelerin event endpoint is fundamentally untrusted
 
 Even with server-generated IDs, an attacker can still inject `unverified=1` rows for arbitrary wallets. The orange "Unverified" badge is the user-visible mitigation, but admin volume metrics are inflated by the injected rows. **Production fix:** require a session token issued by the backend when the swap form opens (POST `/api/sessions/start` returns a short-lived token; the mtpelerin event endpoint validates the token).
 
-### R3 — SQLite is ephemeral on Render free tier
+### R3 — Backups remain on the same VPS
 
-Every redeploy or sleep-wake wipes orders, audit log, and push subscriptions. Acceptable for staging (data is non-critical), unacceptable for production. **Production fix:** Render persistent disk ($0.25/GB/mo) with `DB_PATH=/var/data/onramp.db`, OR migrate to Postgres on a managed service, OR move to a VPS with backups.
+Resolved by the VPS migration: SQLite lives at `/var/lib/onramp/data.db` and a
+daily systemd timer creates integrity-checked backups under
+`/var/backups/onoff`. Off-site replication remains required before final
+production because same-host backups do not cover total VPS loss.
 
-### R4 — No Sentry / observability
+### R4 — No external alerting
 
-Runtime errors only show in Render's console.log stream. No alerting on auth failures spike, webhook signature failures, or quota exhaustion. **Production fix:** wire Sentry (free tier covers 5k events/mo) or self-hosted Glitchtip.
+The health timer and service logs are local to the VPS. They do not notify an
+operator after a failure. Add an external uptime monitor and an alert channel;
+application error reporting can be added separately if its data policy is
+acceptable.
 
 ### R5 — Audit log can be filled by login-failure spam
 
 `login.failure` events are logged regardless of validity. An attacker who wants to hide their tracks could spam thousands of failures to push real entries off the dashboard's "last 25" view. **Production fix:** the existing `vacuumAudit({ keep: 10000 })` helper can be cron'd; or add per-IP failure throttling on top of the rate-limiter.
 
-### R6 — No CSRF protection on /api/push/* and /api/providers/mtpelerin/event
+### R6 — No ownership proof on /api/providers/mtpelerin/event
 
-These endpoints accept JSON from any origin (CORS allowlist gates the *browser*, but a server can call them directly). Fix would require a session cookie + CSRF token, which the current passwordless model doesn't have. **Production posture:** rate-limits + the fixes in F2/F3 reduce blast radius; a passwordless app fundamentally has weaker server-confirmed-identity guarantees than one with sessions.
+This endpoint accepts JSON without an authenticated user session. CORS gates
+browsers, not servers. Keep Mt Pelerin disabled until its event path is bound
+to a short-lived backend-issued session capability.
 
 ### R7 — Webhook replay
 
 We don't track JWT `jti` (JWT ID) for webhooks. A captured Transak webhook JWT could be replayed within its validity window (no `exp` claim is enforced beyond what Transak signs). The DB upsert is idempotent on `id`, so replay re-writes the same row — minimal impact, but a deliberate attacker could replay an old `ORDER_COMPLETED` event after the order was actually `REFUNDED`, downgrading the visible state. **Production fix:** record `(eventID, payload.id)` in a `webhook_events_seen` table and reject duplicates.
 
-### R8 — VAPID keys in repo
+### R9 — Dependency alerts need triage
 
-`backend/.env` contains the VAPID private key. It's gitignored, but the value is in the deployed Render environment. **Production posture:** rotate VAPID keys before going live, store the new ones in a secrets manager (Render's encrypted env vars are fine for shared-tenant; for stricter posture, a managed secrets service).
-
-### R9 — No dependency vulnerability scanning
-
-`npm audit` not currently part of CI. **Production fix:** GitHub Dependabot is free for public repos; or `npm audit --audit-level=high` as a CI gate. The current snapshot was clean as of audit date.
+`npm audit` is not currently part of CI. The deployed production dependency
+set reports three moderate alerts after pruning development dependencies. They
+are not being represented as clean or fixed without advisory-level evidence.
+Dependabot is configured for both npm projects. Resolve the exact transitive
+packages before final production and add an approved blocking CI gate if
+required.
 
 ### R10 — Rate limits are per-instance, not global
 
-`express-rate-limit` uses an in-memory store by default. Verified on the
-deployed Render instance: consecutive POST calls to `/api/providers/transak/widget-url`
-showed `ratelimit-remaining` decrementing 6→5→4→3 then **jumping back to 5**,
-confirming multiple workers handle the requests, each with its own counter.
-Effective limit ≈ `configured_max × workers` (currently observed ~2-3 workers
-on Render free, so ~20-30 req/min effective on a 10/min limiter).
-
-Acceptable for staging (it's still a meaningful brake, just not the absolute
-number written in the config). **Production fix:** swap the default memory
-store for a shared backend — Redis (Upstash has a free tier; or run Redis
-on the same Render service for $0), or even use the existing SQLite as a
-poor-man's store via [`@acpr/rate-limit-postgresql`-style adapter pattern].
-Once swapped, the limit is global across workers/restarts.
+`express-rate-limit` uses an in-memory store. The current VPS runs one backend
+process, but counters reset on restart and would diverge if the service scales
+to multiple processes or hosts. Before scaling, use a shared rate-limit store
+and keep the edge rate limits aligned with the application limits.
 
 ### R11 — Admin session stateless
 
@@ -228,4 +224,4 @@ The admin JWT can't be revoked individually — only the global `ADMIN_JWT_SECRE
 
 ## Hash digest of this audit
 
-This document corresponds to commit `<filled-at-merge>`. Every finding above maps to a commit in the project history; see `git log -- backend/app.js backend/push.js backend/providers/mtpelerin.js index.html` for the audit trail.
+This document corresponds to commit `<filled-at-merge>`. Every finding above maps to a commit in the project history; see `git log -- backend/app.js backend/db.js backend/providers/mtpelerin.js index.html` for the audit trail.

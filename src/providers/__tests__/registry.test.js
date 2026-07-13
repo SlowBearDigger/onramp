@@ -1,11 +1,23 @@
 import { describe, it, expect } from 'vitest'
-import { PROVIDERS, PROVIDER_IDS, getProvider, listProviderMetadata } from '../index.js'
+import {
+  PROVIDERS,
+  PROVIDER_IDS,
+  ENABLED_PROVIDER_IDS,
+  getProvider,
+  listProviderMetadata,
+  listEnabledProviderMetadata,
+} from '../index.js'
 import { assertIsProvider } from '../Provider.js'
 
 describe('provider registry', () => {
   it('exports all four providers', () => {
     expect(PROVIDER_IDS).toEqual(expect.arrayContaining(['transak', 'mtpelerin', 'topper', 'guardarian']))
     expect(PROVIDER_IDS.length).toBe(4)
+  })
+
+  it('enables only Transak unless another provider is explicitly flagged', () => {
+    expect(ENABLED_PROVIDER_IDS).toEqual(['transak'])
+    expect(listEnabledProviderMetadata().map((provider) => provider.id)).toEqual(['transak'])
   })
 
   it('every registered provider conforms to the Provider interface', () => {

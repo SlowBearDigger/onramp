@@ -23,7 +23,7 @@ log() { printf '\n==> %s\n' "$*"; }
 log "apt dependencies"
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -y
-apt-get install -y curl git ca-certificates gnupg build-essential python3 ufw \
+apt-get install -y curl git ca-certificates gnupg build-essential python3 sqlite3 ufw \
   debian-keyring debian-archive-keyring apt-transport-https
 
 log "Node 20 LTS (NodeSource)"
@@ -50,41 +50,69 @@ chown -R "$SVC_USER:$SVC_USER" "$DATA_DIR"
 
 log "clone / update repo"
 if [ -d "$APP_DIR/.git" ]; then
-  git -C "$APP_DIR" pull --ff-only
+  runuser -u "$SVC_USER" -- git -C "$APP_DIR" pull --ff-only
 else
-  git clone "$REPO" "$APP_DIR"
+  install -d -m 0755 -o "$SVC_USER" -g "$SVC_USER" "$APP_DIR"
+  runuser -u "$SVC_USER" -- git clone "$REPO" "$APP_DIR"
 fi
 chown -R "$SVC_USER:$SVC_USER" "$APP_DIR"
+GIT_SHA=$(runuser -u "$SVC_USER" -- git -C "$APP_DIR" rev-parse --short HEAD)
+RELEASE_ID="$GIT_SHA-$(date -u +%Y%m%dT%H%M%SZ)"
 
-log "npm ci (backend, prod deps only)"
-cd "$APP_DIR/backend"
-sudo -u "$SVC_USER" npm ci --omit=dev
+log "npm ci + frontend build"
+cd "$APP_DIR"
+sudo -u "$SVC_USER" npm ci --legacy-peer-deps
+sudo -u "$SVC_USER" env BASE_PATH=/ \
+  VITE_API_BASE_URL=https://api.onoff.finance \
+  VITE_USE_MOCK=false \
+  VITE_ENABLE_PAY=false npm run build
 
 log ".env check"
-if [ ! -f "$APP_DIR/backend/.env" ]; then
+install -d -m 0750 -o root -g "$SVC_USER" /etc/onoff
+if [ ! -f /etc/onoff/backend.env ] && [ ! -f "$APP_DIR/backend/.env" ]; then
   cat >&2 <<EOF
 
-!! MISSING $APP_DIR/backend/.env
+!! MISSING /etc/onoff/backend.env
    Create it before the service can start:
-     cp $APP_DIR/deploy/env.production.template $APP_DIR/backend/.env
-     \$EDITOR $APP_DIR/backend/.env     # fill secrets
-   (or scp your existing local backend/.env here.)
+     install -m 0640 -o root -g $SVC_USER $APP_DIR/deploy/env.production.template /etc/onoff/backend.env
+     \$EDITOR /etc/onoff/backend.env     # fill secrets
+   A legacy $APP_DIR/backend/.env is imported only when the canonical file
+   does not exist; it never overwrites a rotated canonical environment.
    Then re-run this script.
 EOF
   exit 1
 fi
-chown "$SVC_USER:$SVC_USER" "$APP_DIR/backend/.env"
-chmod 600 "$APP_DIR/backend/.env"
+if [ ! -f /etc/onoff/backend.env ]; then
+  install -m 0640 -o root -g "$SVC_USER" "$APP_DIR/backend/.env" /etc/onoff/backend.env
+else
+  chown root:"$SVC_USER" /etc/onoff/backend.env
+  chmod 0640 /etc/onoff/backend.env
+fi
+rm -f -- "$APP_DIR/backend/.env"
 
 log "systemd service"
 cp "$APP_DIR/deploy/onramp-backend.service" /etc/systemd/system/onramp-backend.service
 systemctl daemon-reload
 systemctl enable onramp-backend
-systemctl restart onramp-backend
 
-log "Caddy reverse proxy (auto-HTTPS)"
-cp "$APP_DIR/deploy/Caddyfile" /etc/caddy/Caddyfile
+log "Caddy reverse proxy"
+CADDY_PHASE=${ONOFF_CADDY_PHASE:-pre-dns}
+case "$CADDY_PHASE" in
+  pre-dns) CADDY_SOURCE="$APP_DIR/deploy/Caddyfile.pre-dns" ;;
+  pre-cutover) CADDY_SOURCE="$APP_DIR/deploy/Caddyfile.pre-cutover" ;;
+  final) CADDY_SOURCE="$APP_DIR/deploy/Caddyfile" ;;
+  *) echo "ONOFF_CADDY_PHASE must be pre-dns, pre-cutover or final" >&2; exit 2 ;;
+esac
+caddy validate --config "$CADDY_SOURCE" --adapter caddyfile
+cp "$CADDY_SOURCE" /etc/caddy/Caddyfile
 systemctl reload caddy || systemctl restart caddy
+
+log "frontend release + operations"
+ONOFF_SKIP_HEALTHCHECK=true bash "$APP_DIR/deploy/deploy-release.sh" \
+  "$APP_DIR/dist" "$RELEASE_ID"
+bash "$APP_DIR/deploy/deploy-backend.sh" \
+  "$APP_DIR" "$RELEASE_ID"
+bash "$APP_DIR/deploy/install-operations.sh"
 
 log "firewall (ssh + http/https only; :3001 stays internal)"
 ufw allow OpenSSH 2>/dev/null || ufw allow 22/tcp

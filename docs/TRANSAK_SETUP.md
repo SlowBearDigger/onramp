@@ -12,7 +12,7 @@ End-to-end steps to move the app from **mock demo** to **real Transak staging**,
 │  slowbeardigger  │  ◄── postMessage    │ (Transak hosted widget) │
 │      .dev/ramp   │       events        └────────────┬────────────┘
 └────────┬─────────┘                                  │
-         │ /api/orders                                │ signed webhook
+         │ POST /api/orders/history                   │ signed webhook
          ▼                                            ▼
 ┌──────────────────┐                       ┌──────────────────────┐
 │  Backend (Node)  │ ◄───────────────────  │  POST /webhook/…     │

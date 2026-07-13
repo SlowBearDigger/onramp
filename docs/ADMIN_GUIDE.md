@@ -171,8 +171,9 @@ even if a stray frontend event arrives later.
 
 ### What's protected
 
-- **Public endpoints** are rate-limited to 60 req/min. No global
-  enumeration: `/api/orders` requires a `customerId`.
+- **Public endpoints** are rate-limited to 60 req/min. History is a POST
+  capability lookup using random partner-order IDs; wallet-based listing and
+  raw provider payloads are not exposed.
 - **Admin endpoints** require a valid HS256 JWT in `Authorization: Bearer …`.
 - **Login endpoint** is rate-limited to 5 req/min/IP; counter doesn't
   reset on success.

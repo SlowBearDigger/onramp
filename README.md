@@ -150,7 +150,7 @@ offramp/
 
 ## What this project is — and is not
 
-**It is** an aggregator interface. We never custody crypto, never process payments, never store identity documents. We hold a minimal table of order metadata (wallet address, amounts, status) keyed by the destination wallet — public-key data, not personally identifying.
+**It is** an aggregator interface. We never custody crypto, never process payments, and never store identity documents. We hold a minimal table of order metadata (wallet address, amounts, status); user-facing history requires random per-order capabilities rather than a public wallet lookup.
 
 **It is not** a wallet, an exchange, a money transmitter, or a custodian. Each transaction is contractually between the user and the provider they pick.
 
@@ -162,7 +162,7 @@ This separation matters legally, technically, and ethically. The Privacy Policy 
 
 | Provider | Frontend | Backend | Quote API | Status |
 | --- | --- | --- | --- | --- |
-| Transak | ✅ widget URL builder | ✅ HS256 webhook + quote proxy | ✅ wired via `/api/quotes` | production-ready, needs KYB approval |
+| Transak | ✅ signed widget URL | ✅ HS256 webhook + quote proxy | ✅ wired via `/api/quotes` | staging-ready; production still requires KYB/provider approval and live E2E |
 | Topper | ✅ widget URL builder + bootstrap fetch | ✅ ES256 detached JWS webhook + bootstrap signing | ⚠️ TODO (stub `/api/quotes/topper` returns 501) | skeleton-ready, needs onboarding |
 | Mt Pelerin | ✅ widget URL builder + postMessage forwarding | ✅ unverified-event ingest | ⚠️ TODO (stub `/api/quotes/mtpelerin` returns 501) | skeleton-ready, needs onboarding |
 
