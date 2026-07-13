@@ -6,8 +6,6 @@ import {
   PaperPlaneTilt, Link as LinkIcon, Check, Warning, ShieldCheck,
   CaretDown, Star, QrCode, CircleNotch, X,
 } from '@phosphor-icons/react'
-import Sidebar from '../components/Sidebar'
-import BottomNav from '../components/BottomNav'
 import ProviderModal from '../components/ProviderModal'
 import TransactionFlow from '../components/TransactionFlow'
 import { BlurIn, Stagger, StaggerItem, MagneticButton } from '../components/Motion'
@@ -126,8 +124,7 @@ export default function PayRecipientPage() {
   }
 
   return (
-    <div className="min-h-screen transition-colors duration-300 relative">
-      <Sidebar />
+    <>
       <main className="min-h-screen flex items-center justify-center px-4 py-8 pb-28 sm:py-12 md:pb-12 md:pl-64 relative z-10">
         <div className="w-full max-w-lg">
           <BlurIn>
@@ -236,8 +233,6 @@ export default function PayRecipientPage() {
           </BlurIn>
         </div>
       </main>
-      <BottomNav />
-
       {liveMode && (
         <ProviderModal
           isOpen={provider.isOpen}
@@ -252,7 +247,7 @@ export default function PayRecipientPage() {
           cryptoColor={asset.color}
         />
       )}
-    </div>
+    </>
   )
 }
 

@@ -2,12 +2,9 @@ import { useState, lazy, Suspense } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'motion/react'
 import { CircleNotch } from '@phosphor-icons/react'
-import Sidebar from '../components/Sidebar'
-import BottomNav from '../components/BottomNav'
 import ReactiveBlobs from '../components/ReactiveBlobs'
 import SwapWidget from '../components/SwapWidget'
 import OrderToasts from '../components/OrderToasts'
-import OnboardingTour from '../components/OnboardingTour'
 import { CRYPTOS } from '../config/cryptos'
 
 // HistoryView is the only swap-section view that's heavy enough to warrant
@@ -37,9 +34,8 @@ export default function SwapPage() {
   const { view, mode } = deriveRampState(location.pathname)
 
   return (
-    <div className="min-h-screen transition-colors duration-300 relative">
+    <>
       <ReactiveBlobs color={activeCrypto.color} className="fixed z-0 hidden md:block" warpPhase={warpPhase} />
-      <Sidebar />
       <main className="min-h-screen flex items-center justify-center px-4 py-8 pb-28 sm:py-12 md:pb-12 md:pl-64 relative z-10">
         <div className="w-full max-w-lg">
           {/* AnimatePresence on the VIEW level (ramp form vs history).
@@ -82,15 +78,11 @@ export default function SwapPage() {
           </AnimatePresence>
         </div>
       </main>
-      <BottomNav />
       {/* in-app toast layer — listens to useOrders polling output and
           fires a toast whenever an order's status transitions. mounted
           here (not at App level) so it only runs while the user is on
           a swap-section route, where useOrders is already polling. */}
       <OrderToasts />
-      {/* first-visit welcome tour. one-shot via localStorage; also mounted
-          on /swap so a user landing there first still sees it. */}
-      <OnboardingTour />
-    </div>
+    </>
   )
 }

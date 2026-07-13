@@ -2,9 +2,6 @@ import { useState, useMemo, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from 'motion/react'
 import { ArrowsDownUp, Wallet, Info, MagnifyingGlass, CaretDown, X, Sparkle } from '@phosphor-icons/react'
-import Sidebar from '../components/Sidebar'
-import BottomNav from '../components/BottomNav'
-import OnboardingTour from '../components/OnboardingTour'
 import { BlurIn, Stagger, StaggerItem, MagneticButton } from '../components/Motion'
 import { CryptoIcon } from '../config/cryptos'
 import { CHAINS, getChain } from '../config/chains'
@@ -47,12 +44,10 @@ export default function SwapKitPage() {
   }
 
   return (
-    <div className="min-h-screen transition-colors duration-300 relative">
-      <Sidebar />
-      <main className="min-h-screen flex items-center justify-center px-4 py-8 pb-28 sm:py-12 md:pb-12 md:pl-64 relative z-10">
-        <div className="w-full max-w-lg">
-          <BlurIn>
-            <div className="bg-surface-container-lowest dark:bg-surface-container border border-outline-variant/10 dark:border-white/5 rounded-2xl p-5 sm:p-7 shadow-md shadow-black/5 dark:shadow-black/30">
+    <main className="min-h-screen flex items-center justify-center px-4 py-8 pb-28 sm:py-12 md:pb-12 md:pl-64 relative z-10">
+      <div className="w-full max-w-lg">
+        <BlurIn>
+          <div className="bg-surface-container-lowest dark:bg-surface-container border border-outline-variant/10 dark:border-white/5 rounded-2xl p-5 sm:p-7 shadow-md shadow-black/5 dark:shadow-black/30">
               {/* header */}
               <div className="flex items-baseline justify-between mb-5">
                 <div>
@@ -123,15 +118,10 @@ export default function SwapKitPage() {
                 <Info size={12} weight="bold" className="shrink-0 mt-0.5" aria-hidden="true" />
                 <p>{t('swapkit.footnote')}</p>
               </div>
-            </div>
-          </BlurIn>
-        </div>
-      </main>
-      <BottomNav />
-      {/* first-visit welcome tour. also mounted on SwapPage; localStorage
-          flag prevents double-show across re-navigation. */}
-      <OnboardingTour />
-    </div>
+          </div>
+        </BlurIn>
+      </div>
+    </main>
   )
 }
 
