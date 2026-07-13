@@ -6,6 +6,7 @@ import { CircleNotch } from '@phosphor-icons/react'
 import { ThemeProvider } from './context/ThemeContext'
 import ErrorBoundary from './components/ErrorBoundary'
 import Header from './components/Header'
+import AppShell from './components/AppShell'
 import PageTransition from './components/PageTransition'
 import PrivacyDisclosure from './components/PrivacyDisclosure'
 import LandingPage from './pages/LandingPage'
@@ -92,18 +93,13 @@ function AnimatedRoutes() {
               <Route path="/" element={<LandingPage />} />
               <Route path="/privacy" element={<PrivacyPage />} />
               <Route path="/terms" element={<TermsPage />} />
-              {/* ramp app surface (fiat ↔ crypto via Transak/MtPelerin/Topper).
-                  three sibling routes share SwapPage as their container so
-                  form state and the live ticker survive flips. */}
-              <Route path="/buy" element={<SwapPage />} />
-              <Route path="/sell" element={<SwapPage />} />
-              <Route path="/history" element={<SwapPage />} />
-              {/* crypto ↔ crypto swap surface (SwapKit, non-custodial). */}
-              <Route path="/swap" element={<SwapKitPage />} />
-              {/* pay a recipient — ramp flow with the destination pre-filled.
-                  also the landing target for shared payment links
-                  (/pay?to=..&asset=..&currency=..&amount=..&ref=..). */}
-              <Route path="/pay" element={<PayRecipientPage />} />
+              <Route element={<AppShell />}>
+                <Route path="/buy" element={<SwapPage />} />
+                <Route path="/sell" element={<SwapPage />} />
+                <Route path="/history" element={<SwapPage />} />
+                <Route path="/swap" element={<SwapKitPage />} />
+                <Route path="/pay" element={<PayRecipientPage />} />
+              </Route>
               {/* legacy redirects — the old /swap path was the ramp Buy view
                   and /swap/sell, /swap/history its siblings. external links
                   (push notifications, customer support) may still target
