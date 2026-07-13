@@ -42,7 +42,6 @@ const AdminDashboardPage = lazy(() => import('./pages/admin/DashboardPage'))
 // only on entering/leaving the app surface (not on internal flips).
 const APP_PATHS = ['/buy', '/sell', '/history', '/swap', '/pay']
 const isAppPath = (p) => APP_PATHS.some((r) => p === r || p.startsWith(r + '/'))
-const isE2E = import.meta.env.VITE_E2E === 'true'
 
 function AnimatedRoutes() {
   const location = useLocation()
@@ -101,7 +100,7 @@ function AnimatedRoutes() {
       {/* GDPR disclosure — public surface only. admin has its own login
           gate so a banner there would be redundant noise. /privacy is also
           excluded so the banner doesn't appear on top of the policy itself. */}
-      {!isE2E && location.pathname !== '/privacy' && <PrivacyDisclosure />}
+      {location.pathname !== '/privacy' && <PrivacyDisclosure />}
     </>
   )
 }

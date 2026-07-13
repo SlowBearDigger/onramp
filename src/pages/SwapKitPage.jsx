@@ -48,76 +48,76 @@ export default function SwapKitPage() {
       <div className="w-full max-w-lg">
         <BlurIn>
           <div className="bg-surface-container-lowest dark:bg-surface-container border border-outline-variant/10 dark:border-white/5 rounded-2xl p-5 sm:p-7 shadow-md shadow-black/5 dark:shadow-black/30">
-              {/* header */}
-              <div className="flex items-baseline justify-between mb-5">
-                <div>
-                  <h1 className="text-xl sm:text-2xl font-bold text-on-surface font-[family-name:var(--font-family-display)] m-0">
-                    {t('swapkit.title')}
-                  </h1>
-                  <p className="text-xs text-secondary mt-0.5">
-                    {t('swapkit.subtitle')}
-                  </p>
-                </div>
-                <span className="text-[10px] uppercase tracking-wider font-bold text-tertiary bg-tertiary/10 px-2 py-0.5 rounded">
-                  {t('swapkit.preview')}
-                </span>
+            {/* header */}
+            <div className="flex items-baseline justify-between mb-5">
+              <div>
+                <h1 className="text-xl sm:text-2xl font-bold text-on-surface font-[family-name:var(--font-family-display)] m-0">
+                  {t('swapkit.title')}
+                </h1>
+                <p className="text-xs text-secondary mt-0.5">
+                  {t('swapkit.subtitle')}
+                </p>
               </div>
+              <span className="text-[10px] uppercase tracking-wider font-bold text-tertiary bg-tertiary/10 px-2 py-0.5 rounded">
+                {t('swapkit.preview')}
+              </span>
+            </div>
 
-              <Stagger stagger={0.06} className="space-y-3">
-                <StaggerItem>
-                  <AssetBox
-                    label={t('swapkit.youPay')}
-                    token={source}
-                    onTokenChange={setSource}
-                    amount={amount}
-                    onAmountChange={setAmount}
-                    editable
-                  />
-                </StaggerItem>
+            <Stagger stagger={0.06} className="space-y-3">
+              <StaggerItem>
+                <AssetBox
+                  label={t('swapkit.youPay')}
+                  token={source}
+                  onTokenChange={setSource}
+                  amount={amount}
+                  onAmountChange={setAmount}
+                  editable
+                />
+              </StaggerItem>
 
-                <StaggerItem className="flex justify-center -my-1.5 relative z-10">
-                  <motion.button
-                    type="button"
-                    onClick={swapDirections}
-                    aria-label={t('swapkit.flipDirection')}
-                    title={t('swapkit.flipDirection')}
-                    className="w-11 h-11 bg-surface-container-lowest dark:bg-surface-container rounded-full flex items-center justify-center border-2 border-outline-variant/15 dark:border-white/10 cursor-pointer hover:border-primary/40 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 shadow-sm"
-                    whileTap={{ rotate: 180, scale: 0.9 }}
-                    transition={{ type: 'spring', stiffness: 200, damping: 15 }}
-                  >
-                    <ArrowsDownUp size={20} weight="bold" className="text-primary" aria-hidden="true" />
-                  </motion.button>
-                </StaggerItem>
+              <StaggerItem className="flex justify-center -my-1.5 relative z-10">
+                <motion.button
+                  type="button"
+                  onClick={swapDirections}
+                  aria-label={t('swapkit.flipDirection')}
+                  title={t('swapkit.flipDirection')}
+                  className="w-11 h-11 bg-surface-container-lowest dark:bg-surface-container rounded-full flex items-center justify-center border-2 border-outline-variant/15 dark:border-white/10 cursor-pointer hover:border-primary/40 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 shadow-sm"
+                  whileTap={{ rotate: 180, scale: 0.9 }}
+                  transition={{ type: 'spring', stiffness: 200, damping: 15 }}
+                >
+                  <ArrowsDownUp size={20} weight="bold" className="text-primary" aria-hidden="true" />
+                </motion.button>
+              </StaggerItem>
 
-                <StaggerItem>
-                  <AssetBox
-                    label={t('swapkit.youReceive')}
-                    token={dest}
-                    onTokenChange={setDest}
-                    amount={'—'}
-                    estimated
-                  />
-                </StaggerItem>
+              <StaggerItem>
+                <AssetBox
+                  label={t('swapkit.youReceive')}
+                  token={dest}
+                  onTokenChange={setDest}
+                  amount={'—'}
+                  estimated
+                />
+              </StaggerItem>
 
-                <StaggerItem>
-                  <SlippageRow
-                    value={slippage}
-                    onChange={setSlippage}
-                    showAdvanced={showAdvanced}
-                    onToggleAdvanced={() => setShowAdvanced((v) => !v)}
-                  />
-                </StaggerItem>
+              <StaggerItem>
+                <SlippageRow
+                  value={slippage}
+                  onChange={setSlippage}
+                  showAdvanced={showAdvanced}
+                  onToggleAdvanced={() => setShowAdvanced((v) => !v)}
+                />
+              </StaggerItem>
 
-                <StaggerItem>
-                  <SwapCTA amount={amount} />
-                </StaggerItem>
-              </Stagger>
+              <StaggerItem>
+                <SwapCTA amount={amount} />
+              </StaggerItem>
+            </Stagger>
 
-              {/* footer */}
-              <div className="mt-5 pt-4 border-t border-outline-variant/10 dark:border-white/5 flex items-start gap-2 text-[11px] text-secondary leading-relaxed">
-                <Info size={12} weight="bold" className="shrink-0 mt-0.5" aria-hidden="true" />
-                <p>{t('swapkit.footnote')}</p>
-              </div>
+            {/* footer */}
+            <div className="mt-5 pt-4 border-t border-outline-variant/10 dark:border-white/5 flex items-start gap-2 text-[11px] text-secondary leading-relaxed">
+              <Info size={12} weight="bold" className="shrink-0 mt-0.5" aria-hidden="true" />
+              <p>{t('swapkit.footnote')}</p>
+            </div>
           </div>
         </BlurIn>
       </div>
