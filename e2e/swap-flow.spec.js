@@ -65,3 +65,66 @@ test('quick amount chips populate the amount input', async ({ page }) => {
   const amountInput = page.locator('#swap-pay-amount')
   await expect(amountInput).toHaveValue('100')
 })
+
+test('desktop product navigation stays mounted across app sections', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 })
+  await page.goto('buy')
+  await dismissBanner(page)
+
+  await page.evaluate(() => {
+    window.__onrampNavigationNode = document.querySelector('aside[aria-label="Main navigation"]')
+    window.__onrampDocument = document
+  })
+
+  const expectPersistentShell = async () => {
+    await expect.poll(() => page.evaluate(() => (
+      window.__onrampDocument === document &&
+      window.__onrampNavigationNode === document.querySelector('aside[aria-label="Main navigation"]')
+    ))).toBe(true)
+  }
+
+  await page.getByRole('link', { name: 'Swap', exact: true }).click()
+  await expect(page).toHaveURL(/\/swap$/)
+  await expect(page.getByRole('heading', { name: /swap/i }).first()).toBeVisible()
+  await expectPersistentShell()
+
+  await page.getByRole('link', { name: 'Pay', exact: true }).click()
+  await expect(page).toHaveURL(/\/pay$/)
+  await expect(page.getByRole('heading', { name: /pay/i }).first()).toBeVisible()
+  await expectPersistentShell()
+
+  await page.getByRole('link', { name: 'History', exact: true }).click()
+  await expect(page).toHaveURL(/\/history$/)
+  await expect(page.getByRole('heading', { name: /transaction history/i })).toBeVisible()
+  await expectPersistentShell()
+})
+
+test('mobile product navigation stays mounted across app sections', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('buy')
+  await dismissBanner(page)
+
+  await page.evaluate(() => {
+    window.__onrampNavigationNode = document.querySelector('nav[aria-label="Mobile navigation"]')
+    window.__onrampDocument = document
+  })
+
+  const expectPersistentShell = async () => {
+    await expect.poll(() => page.evaluate(() => (
+      window.__onrampDocument === document &&
+      window.__onrampNavigationNode === document.querySelector('nav[aria-label="Mobile navigation"]')
+    ))).toBe(true)
+  }
+
+  await page.getByRole('link', { name: 'Swap', exact: true }).click()
+  await expect(page).toHaveURL(/\/swap$/)
+  await expectPersistentShell()
+
+  await page.getByRole('link', { name: 'History', exact: true }).click()
+  await expect(page).toHaveURL(/\/history$/)
+  await expectPersistentShell()
+
+  await page.getByRole('link', { name: 'Buy', exact: true }).click()
+  await expect(page).toHaveURL(/\/buy$/)
+  await expectPersistentShell()
+})
