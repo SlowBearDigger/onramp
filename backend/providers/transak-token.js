@@ -58,6 +58,7 @@ async function mintAccessToken() {
       headers: {
         accept: 'application/json',
         'api-secret': apiSecret,
+        'x-api-key': apiKey,
         'content-type': 'application/json',
         // descriptive UA — transak sits behind cloudflare bot filtering and
         // generic runtime UAs have triggered 1010 blocks in testing.

@@ -167,11 +167,74 @@ export function webhookToOrderRow({ eventID, payload }) {
 //   - rotating the access token invalidates the integration server-side only
 const TRANSAK_API_BASE_STAGING = 'https://api-gateway-stg.transak.com'
 const TRANSAK_API_BASE_PROD = 'https://api-gateway.transak.com'
+const TRANSAK_PUBLIC_API_STAGING = 'https://api-stg.transak.com'
+const TRANSAK_PUBLIC_API_PROD = 'https://api.transak.com'
 
 function transakApiBase() {
   return (process.env.TRANSAK_ENV || 'STAGING').toUpperCase() === 'PRODUCTION'
     ? TRANSAK_API_BASE_PROD
     : TRANSAK_API_BASE_STAGING
+}
+
+function transakPublicApiBase() {
+  return (process.env.TRANSAK_ENV || 'STAGING').toUpperCase() === 'PRODUCTION'
+    ? TRANSAK_PUBLIC_API_PROD
+    : TRANSAK_PUBLIC_API_STAGING
+}
+
+function requireApiRequestContext(userIp) {
+  const apiKey = process.env.TRANSAK_API_KEY
+  if (!apiKey) {
+    const err = new Error('transak: TRANSAK_API_KEY is required')
+    err.code = 'not_configured'
+    throw err
+  }
+  if (!userIp) {
+    const err = new Error('transak: a valid user IP is required')
+    err.code = 'invalid_client_ip'
+    throw err
+  }
+  return { apiKey, userIp }
+}
+
+export async function fetchPublicQuote({
+  fiatCurrency,
+  cryptoCurrency,
+  fiatAmount,
+  isBuyOrSell,
+  network,
+  userIp,
+}) {
+  const context = requireApiRequestContext(userIp)
+  const qs = new URLSearchParams({
+    partnerApiKey: context.apiKey,
+    fiatCurrency,
+    cryptoCurrency,
+    fiatAmount: String(fiatAmount),
+    isBuyOrSell,
+    network,
+  })
+  const ac = new AbortController()
+  const timer = setTimeout(() => ac.abort(), 5000)
+  try {
+    const response = await fetch(
+      `${transakPublicApiBase()}/api/v1/pricing/public/quotes?${qs.toString()}`,
+      {
+        headers: {
+          accept: 'application/json',
+          'x-api-key': context.apiKey,
+          'x-user-ip': context.userIp,
+          'user-agent': 'onramp-backend/1.0 (+https://github.com/SlowBearDigger/onramp)',
+        },
+        signal: ac.signal,
+        redirect: 'error',
+      },
+    )
+    const body = await response.json().catch(() => ({}))
+    return { status: response.status, body }
+  } finally {
+    clearTimeout(timer)
+  }
 }
 
 // throws on missing config so callers can map to a clean 503.
@@ -277,6 +340,7 @@ function buildWidgetParams({ apiKey, referrerDomain, session }) {
 // where transak rotated the token early or our cached expiry was off.
 export async function createSignedWidgetUrl(session) {
   const { apiKey, referrerDomain } = assertWidgetUrlConfig()
+  const { userIp } = requireApiRequestContext(session.userIp)
   const url = `${transakApiBase()}/api/v2/auth/session`
 
   const body = {
@@ -291,6 +355,8 @@ export async function createSignedWidgetUrl(session) {
         method: 'POST',
         headers: {
           'access-token': token,
+          'x-api-key': apiKey,
+          'x-user-ip': userIp,
           'content-type': 'application/json',
           accept: 'application/json',
           'user-agent': 'onramp-backend/1.0 (+https://github.com/SlowBearDigger/onramp)',

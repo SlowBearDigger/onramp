@@ -28,6 +28,12 @@ function partnerApiBase() {
 // throws with .code on auth/upstream failures — caller maps to HTTP status.
 export async function fetchPartnerOrders({ walletAddress, limit = 50 }) {
   const token = await getValidAccessToken()
+  const apiKey = process.env.TRANSAK_API_KEY
+  if (!apiKey) {
+    const err = new Error('transak: TRANSAK_API_KEY is required for partner orders')
+    err.code = 'not_configured'
+    throw err
+  }
 
   const qs = new URLSearchParams()
   qs.set('limit', String(Math.min(Math.max(1, limit), 100)))
@@ -45,6 +51,7 @@ export async function fetchPartnerOrders({ walletAddress, limit = 50 }) {
       headers: {
         accept: 'application/json',
         'access-token': token,
+        'x-api-key': apiKey,
         'user-agent': 'onramp-backend/1.0 (+https://github.com/SlowBearDigger/onramp)',
       },
       signal: ac.signal,

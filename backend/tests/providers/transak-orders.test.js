@@ -86,6 +86,8 @@ describe('fetchPartnerOrders', () => {
   beforeEach(() => {
     _resetCacheForTests()
     vi.stubEnv('TRANSAK_PARTNER_ACCESS_TOKEN', 'test-token')
+    vi.stubEnv('TRANSAK_API_KEY', 'test-api-key')
+    vi.stubEnv('TRANSAK_API_SECRET', '')
     vi.stubGlobal('fetch', vi.fn())
   })
   afterEach(() => {
@@ -106,6 +108,7 @@ describe('fetchPartnerOrders', () => {
     expect(url).toContain(encodeURIComponent('filter[walletAddress]').replace(/%5B/g, '%5B'))
     expect(decodeURIComponent(url)).toContain('filter[walletAddress]=0xabc')
     expect(opts.headers['access-token']).toBe('test-token')
+    expect(opts.headers['x-api-key']).toBe('test-api-key')
   })
 
   it('returns [] when the api responds without a data array', async () => {

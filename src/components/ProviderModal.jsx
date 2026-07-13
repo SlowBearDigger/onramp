@@ -51,6 +51,9 @@ export default function ProviderModal({
 }) {
   const { t } = useTranslation()
   const provider = providerName || t('common.providerName')
+  const referrerPolicy = providerName === 'Transak'
+    ? 'strict-origin-when-cross-origin'
+    : 'no-referrer'
   const headingId = useId()
   const closeButtonRef = useRef(null)
   const previouslyFocusedRef = useRef(null)
@@ -159,7 +162,7 @@ export default function ProviderModal({
                 className="flex-1 w-full border-none"
                 allow="camera;fullscreen;payment"
                 sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-modals"
-                referrerPolicy="no-referrer"
+                referrerPolicy={referrerPolicy}
                 title={t('modal.iframeTitle', { provider })}
               />
             )}
@@ -176,7 +179,8 @@ export default function ProviderModal({
                 <a
                   href={widgetUrl}
                   target="_blank"
-                  rel="noopener noreferrer"
+                  rel="noopener"
+                  referrerPolicy={referrerPolicy}
                   onClick={() => onClose?.()}
                   className="inline-flex items-center gap-2 px-5 py-3 rounded-xl font-bold text-sm text-white hover:opacity-90 transition-opacity"
                   style={{ backgroundColor: cryptoColor }}

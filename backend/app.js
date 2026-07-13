@@ -13,7 +13,13 @@ import {
   assertWebhookConfigSafe as assertTransakConfigSafe,
   createSignedWidgetUrl as createTransakWidgetUrl,
   isWidgetUrlConfigured as isTransakWidgetConfigured,
+  fetchPublicQuote as fetchTransakQuote,
 } from './providers/transak.js'
+import {
+  clientIpFromRequest,
+  enforceAllowedOrigin,
+  parseCorsOrigins,
+} from './http-security.js'
 import {
   signBootstrapToken as signTopperBootstrap,
   verifyOrderWebhook as verifyTopperWebhook,
@@ -65,16 +71,12 @@ import {
 
 const PORT = Number(process.env.PORT || 3001)
 const TRANSAK_ENV = process.env.TRANSAK_ENV || 'STAGING'
-const TRANSAK_API_BASE = TRANSAK_ENV === 'PRODUCTION'
-  ? 'https://api.transak.com'
-  : 'https://api-stg.transak.com'
+const IS_PRODUCTION = (process.env.NODE_ENV || '').toLowerCase() === 'production' ||
+  TRANSAK_ENV.toUpperCase() === 'PRODUCTION'
 
 // CORS allowlist — trim, drop empties (protects against stray trailing commas
 // in env config), require https in production.
-const CORS_ORIGIN = (process.env.CORS_ORIGIN || 'http://localhost:5173')
-  .split(',')
-  .map((s) => s.trim())
-  .filter(Boolean)
+const CORS_ORIGIN = parseCorsOrigins(process.env.CORS_ORIGIN, { production: IS_PRODUCTION })
 
 // boot-time safety gates. transak's insecure-webhook flag must not be on in
 // production; topper and admin must be either fully configured or fully disabled.
@@ -124,6 +126,7 @@ app.use(cors({
   credentials: false,
   methods: ['GET', 'POST'],
 }))
+app.use('/api', enforceAllowedOrigin(CORS_ORIGIN))
 
 // rate limits.
 //
@@ -273,33 +276,27 @@ app.get('/api/quotes', apiLimiter, async (req, res) => {
     return res.status(400).json({ error: 'invalid_fiatAmount' })
   }
 
-  const controller = new AbortController()
-  const timer = setTimeout(() => controller.abort(), 5000)
   try {
-    const qs = new URLSearchParams({
-      partnerApiKey: process.env.TRANSAK_API_KEY || '',
+    const userIp = clientIpFromRequest(req)
+    const result = await fetchTransakQuote({
       fiatCurrency,
       cryptoCurrency,
-      fiatAmount: String(fiatAmount),
+      fiatAmount,
       isBuyOrSell,
       network,
+      userIp,
     })
-    const url = `${TRANSAK_API_BASE}/api/v1/pricing/public/quotes?${qs.toString()}`
-    const r = await fetch(url, {
-      headers: { accept: 'application/json' },
-      signal: controller.signal,
-      // explicitly do not follow redirects across origins — prevents the
-      // remote from bouncing us to an internal URL.
-      redirect: 'error',
-    })
-    const body = await r.json().catch(() => ({}))
-    res.status(r.status).json(body)
+    res.status(result.status).json(result.body)
   } catch (err) {
+    if (err?.code === 'invalid_client_ip') {
+      return res.status(400).json({ error: 'invalid_client_ip' })
+    }
+    if (err?.code === 'not_configured') {
+      return res.status(503).json({ error: 'transak_not_configured' })
+    }
     // do not surface the upstream error detail — it can leak DNS/host info.
     console.error('[quotes] upstream failure:', err?.message)
     res.status(502).json({ error: 'upstream_error' })
-  } finally {
-    clearTimeout(timer)
   }
 })
 
@@ -558,6 +555,7 @@ app.post('/api/providers/transak/widget-url', widgetUrlLimiter, async (req, res)
   }
 
   try {
+    const userIp = clientIpFromRequest(req)
     const result = await createTransakWidgetUrl({
       mode: body.mode,
       cryptoCurrency: body.cryptoCurrency,
@@ -571,9 +569,13 @@ app.post('/api/providers/transak/widget-url', widgetUrlLimiter, async (req, res)
       themeColor: body.themeColor,
       theme: body.theme,
       redirectURL: safeRedirectURL,
+      userIp,
     })
     res.json(result)
   } catch (err) {
+    if (err?.code === 'invalid_client_ip') {
+      return res.status(400).json({ error: 'invalid_client_ip' })
+    }
     if (err?.code === 'not_configured') {
       return res.status(503).json({ error: 'transak_not_configured' })
     }

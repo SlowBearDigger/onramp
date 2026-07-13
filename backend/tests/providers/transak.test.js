@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { SignJWT } from 'jose'
 import {
   verifyOrderWebhook,
@@ -6,6 +6,8 @@ import {
   assertWebhookConfigSafe,
   classifyEvent,
   KYC_EVENT_IDS,
+  createSignedWidgetUrl,
+  fetchPublicQuote,
 } from '../../providers/transak.js'
 
 const SECRET = 'test-partner-access-token-please-rotate'
@@ -206,5 +208,65 @@ describe('transak.assertWebhookConfigSafe', () => {
         expect(() => assertWebhookConfigSafe()).not.toThrow()
       },
     )
+  })
+})
+
+describe('Transak mandatory API headers', () => {
+  beforeEach(() => {
+    vi.stubEnv('TRANSAK_ENV', 'STAGING')
+    vi.stubEnv('TRANSAK_API_KEY', 'test-api-key')
+    vi.stubEnv('TRANSAK_PARTNER_ACCESS_TOKEN', 'test-access-token')
+    vi.stubEnv('TRANSAK_REFERRER_DOMAIN', 'https://app.onoff.finance')
+    vi.stubEnv('TRANSAK_API_SECRET', '')
+    vi.stubGlobal('fetch', vi.fn())
+  })
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
+    vi.unstubAllGlobals()
+  })
+
+  it('sends x-api-key and x-user-ip when creating a widget session', async () => {
+    fetch.mockResolvedValueOnce(new Response(JSON.stringify({
+      data: { widgetUrl: 'https://global-stg.transak.com?sessionId=test' },
+    }), { status: 200, headers: { 'content-type': 'application/json' } }))
+
+    await createSignedWidgetUrl({
+      mode: 'buy',
+      cryptoCurrency: 'BTC',
+      cryptoNetwork: 'bitcoin',
+      fiatCurrency: 'USD',
+      fiatAmount: 100,
+      walletAddress: 'bc1qexamplewallet',
+      userIp: '203.0.113.42',
+    })
+
+    const [url, options] = fetch.mock.calls[0]
+    expect(url).toBe('https://api-gateway-stg.transak.com/api/v2/auth/session')
+    expect(options.headers['access-token']).toBe('test-access-token')
+    expect(options.headers['x-api-key']).toBe('test-api-key')
+    expect(options.headers['x-user-ip']).toBe('203.0.113.42')
+  })
+
+  it('uses both the required header and query parameter for public quotes', async () => {
+    fetch.mockResolvedValueOnce(new Response(JSON.stringify({ response: [] }), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    }))
+
+    await fetchPublicQuote({
+      fiatCurrency: 'USD',
+      cryptoCurrency: 'BTC',
+      fiatAmount: 100,
+      isBuyOrSell: 'BUY',
+      network: 'bitcoin',
+      userIp: '203.0.113.42',
+    })
+
+    const [url, options] = fetch.mock.calls[0]
+    const parsed = new URL(url)
+    expect(parsed.searchParams.get('partnerApiKey')).toBe('test-api-key')
+    expect(options.headers['x-api-key']).toBe('test-api-key')
+    expect(options.headers['x-user-ip']).toBe('203.0.113.42')
   })
 })

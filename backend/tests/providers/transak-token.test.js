@@ -21,8 +21,9 @@ afterEach(() => {
 })
 
 function mockRefresh(token, expiresAt) {
-  globalThis.fetch.mockImplementationOnce(async (url) => {
+  globalThis.fetch.mockImplementationOnce(async (url, options) => {
     expect(url).toBe(REFRESH_URL)
+    expect(options.headers['x-api-key']).toBe('test-api-key')
     return new Response(JSON.stringify({ data: { accessToken: token, expiresAt } }), {
       status: 200,
       headers: { 'content-type': 'application/json' },
