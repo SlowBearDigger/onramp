@@ -8,6 +8,7 @@ name: Deploy frontend to GitHub Pages
 #   1. Repo Settings → Pages → "Source" = "GitHub Actions"
 #   2. Repo Settings → Secrets and variables → Actions → Variables → New
 #      repository variable: VITE_API_BASE_URL = https://api.onoff.finance
+#      repository variable: VITE_REOWN_PROJECT_ID = <Reown project ID>
 #   3. Push to main. Pages URL: https://<user>.github.io/<repo>/
 
 on:
@@ -51,6 +52,9 @@ jobs:
           # falls through to '/api' (same-origin path) if unset, which only
           # works if you're proxying via a custom domain.
           VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
+          # Public AppKit identifier. Domain use is restricted by Reown's
+          # origin allowlist; this is not a secret.
+          VITE_REOWN_PROJECT_ID: ${{ vars.VITE_REOWN_PROJECT_ID }}
           VITE_TRANSAK_ENV: STAGING
           VITE_MTPELERIN_ENV: STAGING
           VITE_TOPPER_ENV: STAGING
@@ -58,6 +62,7 @@ jobs:
           VITE_ENABLE_PAY: 'false'
         run: |
           test -n "$VITE_API_BASE_URL"
+          test -n "$VITE_REOWN_PROJECT_ID"
           npm run build
           test -z "$(find dist/assets -maxdepth 1 -name 'PayRecipientPage-*.js' -print -quit)"
           test -z "$(find dist/assets -maxdepth 1 -name 'PayQr-*.js' -print -quit)"

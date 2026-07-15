@@ -1,6 +1,6 @@
 // Reown AppKit configuration.
 //
-// projectId comes from https://cloud.reown.com — free signup. ours lives
+// projectId comes from https://dashboard.reown.com. ours lives
 // in VITE_REOWN_PROJECT_ID. it's PUBLIC by design (appears in the bundle),
 // but having our own gives us:
 //   - allowlist of authorized origins (set in the Reown dashboard)
